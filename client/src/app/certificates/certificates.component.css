@@ -1,0 +1,17 @@
+.certificates-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+td * {
+    padding-left: 10px;
+    padding-right: 10px;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+.certificate-actions {
+    display: inline-flex;
+    gap: 10px;
+}

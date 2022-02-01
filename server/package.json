@@ -1,0 +1,16 @@
+{
+  "name": "vpn-smb-manager-server",
+  "version": "1.0.0",
+  "description": "Server for VPN SMB Manager",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.7.4",
+    "express": "^4.17.2",
+    "sqlite3": "^5.0.2"
+  }
+}

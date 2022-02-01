@@ -1,0 +1,30 @@
+<div class="user-container">
+  <mat-card class="user-card">
+    <mat-card-title class="user-card-title">{{ inviteCode ? "Create New User" : "Login" }}</mat-card-title>
+    <mat-card-content class="user-card-content">
+      <mat-form-field>
+        <input matInput [formControl]="username" placeholder="Username" pattern="^\w{6,10}$" required>
+        <mat-error *ngIf="username.errors?.['pattern']">
+          Username must be 6 - 10 alphanumeric characters. Underscores are accepted too.
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput [formControl]="password" placeholder="Password" type="password" pattern="^.{4,15}$" required>
+        <mat-error *ngIf="password.errors?.['pattern']">
+          Password must be 4 - 15 characters.
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field *ngIf="inviteCode">
+        <input matInput [formControl]="passwordConfirm" placeholder="Confirm Password" type="password" required>
+        <mat-error *ngIf="passwordConfirm.errors?.['passwordsMatch']">
+          Passwords must match.
+        </mat-error>
+      </mat-form-field>
+    </mat-card-content>
+    <mat-card-actions class="user-card-actions">
+      <button mat-raised-button color="primary" [disabled]="!isFormValid()"
+        (click)="login()">{{ inviteCode ? "Create and Login" : "Login" }}</button>
+      <button *ngIf="inviteCode" mat-raised-button color="accent" (click)="login()">Have an Account?</button>
+    </mat-card-actions>
+  </mat-card>
+</div>

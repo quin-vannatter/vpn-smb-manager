@@ -1,0 +1,35 @@
+table {
+    width: 100%;
+    background-color: #EEE;
+}
+
+td * {
+    padding-left: 10px;
+    padding-right: 10px;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+.main-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.main-row-actions {
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.main-actions > button {
+    flex: 1;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
