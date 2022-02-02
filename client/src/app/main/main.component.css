@@ -10,6 +10,10 @@ td * {
     vertical-align: middle;
 }
 
+td {
+    white-space: nowrap;
+}
+
 .main-actions {
     width: 100%;
     display: flex;
@@ -17,10 +21,19 @@ td * {
     gap: 20px;
 }
 
-.main-row-actions {
-    width: fit-content;
+.main-row-connected {
     display: flex;
     flex-direction: row;
+    text-align: center;
+    justify-content: center!important;
+    gap: 20px;
+}
+
+.main-row-actions {
+    display: flex;
+    flex-direction: row;
+    text-align: right;
+    justify-content: end!important ;
     gap: 20px;
 }
 

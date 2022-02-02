@@ -1,7 +1,7 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, BehaviorSubject } from 'rxjs';
+import { catchError, BehaviorSubject, Observable, Subject } from 'rxjs';
 
 
 @Injectable({
@@ -66,6 +66,34 @@ export abstract class BaseService {
   }
 
   protected delete<T>(action?: string) {
-    return this.http.delete<T>(this.getUrl(action), { headers: BaseService.headers }).pipe(catchError(this.getErrorCallback()));
+    return this.http.delete<T>(this.getUrl(action), ).pipe(catchError(this.getErrorCallback()));
+  }
+
+  protected postDownloadFile(body: any): Observable<void> {
+    const subject: Subject<void> = new Subject()
+    this.http.post(this.getUrl(), body, { headers: BaseService.headers, responseType: "blob", observe: 'response'})
+    .pipe(catchError(this.getErrorCallback())).subscribe(response => this.downloadFile(response));
+
+    return subject.asObservable();
+  }
+
+  protected getDownloadFile(action: string): Observable<void>  {
+    const subject: Subject<void> = new Subject()
+    this.http.get(this.getUrl(action), { headers: BaseService.headers, responseType: "blob", observe: 'response'})
+    .pipe(catchError(this.getErrorCallback())).subscribe(response => {
+      this.downloadFile(response)
+      subject.next();
+    });
+
+    return subject.asObservable();
+  }
+
+  private downloadFile(response: HttpResponse<Blob>) {
+    const a = document.createElement('a')
+    const objectUrl = URL.createObjectURL(response.body as any);
+    a.href = objectUrl
+    a.download = /[\w\.]+$/.exec(response.headers.get("Content-Disposition") || "")?.join("") || "file";
+    a.click();
+    URL.revokeObjectURL(objectUrl);
   }
 }

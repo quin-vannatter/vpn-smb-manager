@@ -23,7 +23,7 @@ export class UserService extends BaseService {
   login(username: string, password: string): Observable<void> {
     return this.post<any>({
       username,
-      password
+      password: btoa(password)
     }, "login").pipe(tap((response: any) => {
       this.setAuthToken(response.id);
       this.currentUserSubject.next(undefined);

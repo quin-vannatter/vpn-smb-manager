@@ -135,8 +135,7 @@ const REMOVE_PROPERTIES = [
 
 const Certificate = Schema("CERTIFICATES", [
     "id",
-    "username",
-    "label"
+    "username"
 ], db);
 
 const User = Schema("USERS", [
@@ -288,16 +287,16 @@ function isUserConnected(username) {
     });
 }
 
-function createCertificate(username, password, label) {
+function createCertificate(username, password) {
     return new Promise(resolve => {
         var id = createId();
-        exec([__dirname + "/scripts/create_certificate.sh", id, password].join(" "), (err, stdout) => {
+        var decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+        exec([__dirname + "/scripts/create_certificate.sh", __dirname, id, decodedPassword].join(" "), (err, stdout) => {
             if (!err) {
                 Certificate.create({
                     id,
-                    username,
-                    label
-                }).then(() => resolve(stdout));
+                    username
+                }).then(() => resolve(id));
             } else {
                 console.error(err);
                 resolve();
@@ -318,7 +317,7 @@ function deleteCertificates(username) {
 
 function deleteCertificateById(id) {
     return new Promise(resolve => {
-        exec([__dirname + "/scripts/revoke_certificate.sh", id].join(" "), err => {
+        exec([__dirname + "/scripts/revoke_certificate.sh", __dirname, id].join(" "), err => {
             if (!err) {
                 Certificate.delete({
                     id
@@ -343,7 +342,7 @@ function getCertificate(username) {
 }
 
 function executeGetCertificate(id, callback) {
-    exec([__dirname + "/scripts/get_certificate.sh", id].join(" "), (err, stdout) => {
+    exec([__dirname + "/scripts/get_certificate.sh", __dirname, id].join(" "), (err, stdout) => {
         if (!err) {
             callback(stdout);
         } else {
@@ -431,13 +430,17 @@ function createEndpoint(action, path, fn, isAuthenticated = true, isAdmin = fals
 createEndpoint("get", "users", getUsers);
 
 createCertificateEndpoint("post", "certificates", (req, res) => {
-    var password = req.body.password;
-    if (!validatePassword(req.user.passwordHash, password) || !password) {
-        res.status(401);
-        return Promise.resolve();
-    } else {
-        return createCertificate(req.user.username, password);
-    }
+    return new Promise(resolve => {
+        var password = req.body.password;
+        if (!validatePassword(req.user.passwordHash, password) || !password) {
+            res.status(401);
+            resolve();
+        } else {
+            createCertificate(req.user.username, password).then(id => {
+                getCertificateById(req.user.username, id).then(result => resolve(result));
+            });
+        }
+    });
 });
 
 createCertificateEndpoint("get", "certificates/download", req => {
@@ -454,7 +457,7 @@ createEndpoint("get", "certificates", () => {
             var certificateIds = certificates.map(certificate => certificate.id);
             getConnectedCertificates(certificateIds).then(connectedIds => {
                 resolve(cleanOutput(certificates).map(certificate => ({
-                    isConnected: connectedIds.indexOf(certificate.id),
+                    isConnected: connectedIds.indexOf(certificate.id) !== -1,
                     ...certificate
                 })));
             });
@@ -552,15 +555,16 @@ createEndpoint("delete", "users/:username", req => {
         User.findOne({
             username
         }).then(user => {
-            if (user) {
-                deleteCertificates(username).then()
-                return user.remove({ username });
+            if (user && req.user.username === username || req.user.isAdmin) {
+                deleteCertificates(username).then(() => {
+                    User.delete({ username }).then(() => resolve());
+                });
             } else {
                 resolve();
             }
         });
     })
-}, true, true);
+}, true);
 
 if (!headless) {
     app.get("*.*", express.static("./ui"))
@@ -569,7 +573,7 @@ if (!headless) {
     });
 }
 User.find().then(users => {
-    if (!users.length) {
+    if (!users.some(user => user.isAdmin)) {
         console.log(createInviteCode(undefined, true));
     }
 });

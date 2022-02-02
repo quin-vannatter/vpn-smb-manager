@@ -21,4 +21,16 @@ export class CertificateService extends BaseService {
   getCertificates(): Observable<Certificate[] | undefined> {
     return this.get<Certificate[] | undefined>();
   }
+
+  getCertificate(): void {
+    this.getDownloadFile("download");
+  }
+
+  getCertificateById(id: string): Observable<void> {
+    return this.getDownloadFile(`${id}/download`);
+  }
+
+  createCertificate(password: string): Observable<void> {
+    return this.postDownloadFile({ password: btoa(password)});
+  }
 }

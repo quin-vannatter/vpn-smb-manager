@@ -32,7 +32,7 @@ export class LoginComponent {
 
   login(): void {
     if (this.username.valid && this.password.valid) {
-      var userArgs: [string, string] = [this.username.value, btoa(this.password.value)];
+      var userArgs: [string, string] = [this.username.value, this.password.value];
       if (!this.inviteCode) {
         this.userService.login(...userArgs).subscribe(() => this.router.navigate(["home"]));
       } else {

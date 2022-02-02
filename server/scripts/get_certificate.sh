@@ -1,19 +1,19 @@
 #!/bin/bash
 
-cat ../config/base.conf
+cat $1/config/base.conf
 
 echo "<ca>"
-cat ../config/ca.crt
+cat $1/config/ca.crt
 echo "</ca>"
 
 echo "<cert>"
-cat ../keys/$1.crt
+cat $1/keys/$2.crt
 echo "</cert>"
 
 echo "<key>"
-cat ../keys/$1.key
+cat $1/keys/$2.key
 echo "</key>"
 
 echo "<tls-crypt>"
-sudo cat ../config/ta.key
+sudo cat $1/config/ta.key
 echo "</tls-crypt>"

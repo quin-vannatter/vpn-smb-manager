@@ -20,6 +20,7 @@ import { LoginComponent } from './login/login.component';
 import { MainComponent } from './main/main.component';
 import { CertificateService } from './services/certificate.service';
 import { CertificatesComponent } from './certificates/certificates.component';
+import { PasswordPromptComponent } from './password-prompt/password-prompt.component';
 
 @NgModule({
   declarations: [
@@ -27,7 +28,8 @@ import { CertificatesComponent } from './certificates/certificates.component';
     InviteCodeComponent,
     LoginComponent,
     MainComponent,
-    CertificatesComponent
+    CertificatesComponent,
+    PasswordPromptComponent
   ],
   imports: [
     BrowserModule,

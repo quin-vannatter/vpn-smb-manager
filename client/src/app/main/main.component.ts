@@ -4,6 +4,7 @@ import { CertificatesComponent } from '../certificates/certificates.component';
 import { InviteCodeComponent } from '../invite-code/invite-code.component';
 import { Certificate } from '../models/certificate.interface';
 import { User } from '../models/user.interface';
+import { PasswordPromptComponent } from '../password-prompt/password-prompt.component';
 import { CertificateService } from '../services/certificate.service';
 import { UserService } from '../services/user.service';
 
@@ -51,6 +52,7 @@ export class MainComponent {
   viewCertificates(certificates: Certificate[] | undefined) {
     if (certificates) {
       this.dialog.open(CertificatesComponent, {
+        width: "100%",
         data: certificates
       });
     }
@@ -61,7 +63,21 @@ export class MainComponent {
   }
 
   getCertificate() {
-
+    if (this.currentUser?.username) {
+      this.certificateService.getCertificates().subscribe(certificates => {
+        if (this.currentUser?.username) {
+          if (certificates?.some(certificate => !certificate.isConnected)) {
+            this.certificateService.getCertificate();
+          } else {
+            this.dialog.open(PasswordPromptComponent).afterClosed().subscribe(password => {
+              if (password && this.currentUser?.username) {
+                this.certificateService.createCertificate(password);
+              }
+            });
+          }
+        }
+      })
+    }
   }
 
   hasAccess(username: string) {
@@ -70,7 +86,9 @@ export class MainComponent {
 
   deleteUser(user: User) {
     if (this.currentUser?.username === user.username || this.currentUser?.isAdmin) {
-      this.userService.deleteUser(user.username);
+      this.userService.deleteUser(user.username).subscribe(() => {
+        this.getTableData();
+      });
     }
   }
 
