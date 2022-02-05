@@ -16,7 +16,7 @@ table {
 
 .certificate-actions {
     display: flex;
-    justify-content: end!important;
+    justify-content: flex-end!important;
     text-align: end;
     gap: 20px;
 }

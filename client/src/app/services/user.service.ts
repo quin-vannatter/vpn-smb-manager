@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { BehaviorSubject, map, Observable, tap } from 'rxjs';
 import { User } from '../models/user.interface';
@@ -16,8 +17,8 @@ export class UserService extends BaseService {
     return "users";
   }
 
-  constructor(http: HttpClient, router: Router) {
-    super(http, router);
+  constructor(http: HttpClient, router: Router, dialog: MatDialog) {
+    super(http, router, dialog);
   }
 
   login(username: string, password: string): Observable<void> {
@@ -57,14 +58,20 @@ export class UserService extends BaseService {
   }
 
   createUser(inviteCode: string, username: string, password: string): Observable<any> {
-    return this.post<any>({
+    return this.post({
       inviteCode,
       username,
-      password
+      password: btoa(password)
     });
   }
 
   deleteUser(username: string): Observable<any> {
     return this.delete(username);
+  }
+
+  promoteUser(username: string): Observable<any> {
+    return this.put("promote", {
+      username
+    });
   }
 }

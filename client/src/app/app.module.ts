@@ -13,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button'; 
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { UserService } from './services/user.service';
 import { InviteCodeComponent } from './invite-code/invite-code.component';
@@ -21,6 +22,7 @@ import { MainComponent } from './main/main.component';
 import { CertificateService } from './services/certificate.service';
 import { CertificatesComponent } from './certificates/certificates.component';
 import { PasswordPromptComponent } from './password-prompt/password-prompt.component';
+import { LoadingComponent } from './loading/loading.component';
 
 @NgModule({
   declarations: [
@@ -29,7 +31,8 @@ import { PasswordPromptComponent } from './password-prompt/password-prompt.compo
     LoginComponent,
     MainComponent,
     CertificatesComponent,
-    PasswordPromptComponent
+    PasswordPromptComponent,
+    LoadingComponent
   ],
   imports: [
     BrowserModule,
@@ -44,7 +47,8 @@ import { PasswordPromptComponent } from './password-prompt/password-prompt.compo
     MatInputModule,
     MatButtonModule,
     MatDialogModule,
-    MatIconModule
+    MatIconModule,
+    MatProgressSpinnerModule
 
   ],
   providers: [ UserService, CertificateService ],

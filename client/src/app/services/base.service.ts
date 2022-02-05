@@ -1,8 +1,8 @@
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { catchError, BehaviorSubject, Observable, Subject } from 'rxjs';
-
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +14,7 @@ export abstract class BaseService {
 
   static tokenSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient, private router: Router, private dialog: MatDialog) {
     BaseService.headers.append("Content-Type", "application/json");
     var token = localStorage.getItem("token");
     if (token) {
@@ -45,8 +45,9 @@ export abstract class BaseService {
 
   private getErrorCallback() {
     return (err: any) => {
-      if(/^40\d{1}$/.test(err.status)) {
+      if(/^(4|5)0\d{1}$/.test(err.status)) {
         this.clearAuthToken();
+        this.dialog.closeAll();
         this.router.navigate(['login']);
       }
       throw err;
@@ -61,18 +62,21 @@ export abstract class BaseService {
     return this.http.post<T>(this.getUrl(action), body, { headers: BaseService.headers }).pipe(catchError(this.getErrorCallback()));
   }
 
-  protected put<T>(action?: string) {
-    return this.http.put<T>(this.getUrl(action), undefined, { headers: BaseService.headers }).pipe(catchError(this.getErrorCallback()));
+  protected put<T>(action?: string, body?: object) {
+    return this.http.put<T>(this.getUrl(action), body, { headers: BaseService.headers }).pipe(catchError(this.getErrorCallback()));
   }
 
   protected delete<T>(action?: string) {
-    return this.http.delete<T>(this.getUrl(action), ).pipe(catchError(this.getErrorCallback()));
+    return this.http.delete<T>(this.getUrl(action), { headers: BaseService.headers }).pipe(catchError(this.getErrorCallback()));
   }
 
   protected postDownloadFile(body: any): Observable<void> {
     const subject: Subject<void> = new Subject()
     this.http.post(this.getUrl(), body, { headers: BaseService.headers, responseType: "blob", observe: 'response'})
-    .pipe(catchError(this.getErrorCallback())).subscribe(response => this.downloadFile(response));
+    .pipe(catchError(this.getErrorCallback())).subscribe(response => {
+      this.downloadFile(response);
+      subject.next();
+    });
 
     return subject.asObservable();
   }

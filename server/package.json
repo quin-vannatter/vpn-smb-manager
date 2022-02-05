@@ -4,8 +4,7 @@
   "description": "Server for VPN SMB Manager",
   "main": "index.js",
   "scripts": {
-    "start": "sudo node index.js",
-    "headless": "node index.js headless"
+    "start": "sudo node index.js"
   },
   "author": "",
   "license": "ISC",

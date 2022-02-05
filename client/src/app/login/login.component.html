@@ -3,15 +3,15 @@
     <mat-card-title class="user-card-title">{{ inviteCode ? "Create New User" : "Login" }}</mat-card-title>
     <mat-card-content class="user-card-content">
       <mat-form-field>
-        <input matInput [formControl]="username" placeholder="Username" pattern="^\w{6,10}$" required>
+        <input matInput [formControl]="username" placeholder="Username" pattern="^\w{3,25}$" required>
         <mat-error *ngIf="username.errors?.['pattern']">
-          Username must be 6 - 10 alphanumeric characters. Underscores are accepted too.
+          Username must be 3 - 25 alphanumeric characters. Underscores are accepted too.
         </mat-error>
       </mat-form-field>
       <mat-form-field>
-        <input matInput [formControl]="password" placeholder="Password" type="password" pattern="^.{4,15}$" required>
+        <input matInput [formControl]="password" placeholder="Password" type="password" pattern="^.{4,50}$" required>
         <mat-error *ngIf="password.errors?.['pattern']">
-          Password must be 4 - 15 characters.
+          Password must be 4 - 50 characters.
         </mat-error>
       </mat-form-field>
       <mat-form-field *ngIf="inviteCode">

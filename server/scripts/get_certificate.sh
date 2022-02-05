@@ -1,19 +1,19 @@
 #!/bin/bash
 
-cat $1/config/base.conf
+cat "$1"/config/base.conf
 
 echo "<ca>"
-cat $1/config/ca.crt
+sudo cat /etc/openvpn/server/ca.crt
 echo "</ca>"
 
 echo "<cert>"
-cat $1/keys/$2.crt
+cat "$1"/keys/"$2".crt
 echo "</cert>"
 
 echo "<key>"
-cat $1/keys/$2.key
+cat "$1"/keys/"$2".key
 echo "</key>"
 
 echo "<tls-crypt>"
-sudo cat $1/config/ta.key
+sudo cat /etc/openvpn/server/ta.key
 echo "</tls-crypt>"

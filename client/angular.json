@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "user-manager": {
+    "vpn-smb-manager-client": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:application": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "../user-manager-server/ui",
+            "outputPath": "../server/ui",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -74,10 +74,10 @@
           },
           "configurations": {
             "production": {
-              "browserTarget": "user-manager:build:production"
+              "browserTarget": "vpn-smb-manager-client:build:production"
             },
             "development": {
-              "browserTarget": "user-manager:build:development"
+              "browserTarget": "vpn-smb-manager-client:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -85,7 +85,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "user-manager:build"
+            "browserTarget": "vpn-smb-manager-client:build"
           }
         },
         "test": {
@@ -109,5 +109,5 @@
       }
     }
   },
-  "defaultProject": "user-manager"
+  "defaultProject": "vpn-smb-manager-client"
 }

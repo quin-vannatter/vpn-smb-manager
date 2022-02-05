@@ -4,6 +4,9 @@ import { Router } from '@angular/router';
 import { BaseService } from './base.service';
 import { Observable } from 'rxjs';
 import { Certificate } from '../models/certificate.interface';
+import { MatDialog } from '@angular/material/dialog';
+
+const FETCH_TIMEOUT = 5000;
 
 @Injectable({
   providedIn: 'root'
@@ -14,8 +17,8 @@ export class CertificateService extends BaseService {
       return "certificates";
   }
 
-  constructor(http: HttpClient, router: Router) {
-    super(http, router);
+  constructor(http: HttpClient, router: Router, dialog: MatDialog) {
+    super(http, router, dialog);
   }
 
   getCertificates(): Observable<Certificate[] | undefined> {
@@ -32,5 +35,9 @@ export class CertificateService extends BaseService {
 
   createCertificate(password: string): Observable<void> {
     return this.postDownloadFile({ password: btoa(password)});
+  }
+
+  deleteCertificate(id: string): Observable<void> {
+    return this.delete(id);
   }
 }

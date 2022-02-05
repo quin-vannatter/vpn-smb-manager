@@ -1,5 +1,6 @@
 var express = require("express");
 var https = require("https");
+var http = require("http");
 var fs = require("fs");
 var crypto = require("crypto");
 var compression = require("compression");
@@ -7,6 +8,8 @@ var {
     exec
 } = require("child_process");
 var sqlite3 = require("sqlite3").verbose();
+
+const headless = process.argv[2] === "headless";
 
 let db = new sqlite3.Database("./vpn-smb-manager.db", sqlite3.OPEN_READWRITE, err => {
     if (err) {
@@ -102,29 +105,33 @@ function Schema(tableName, properties, db) {
     return newSchema;
 }
 
-var httpsServer;
+var server;
 
 var app = express();
 app.use(compression());
 app.use(express.json());
 
-try {
+var port;
+
+if(!headless) {
     var key = fs.readFileSync("/etc/letsencrypt/live/yanisin.com/privkey.pem", "utf8");
     var cert = fs.readFileSync("/etc/letsencrypt/live/yanisin.com/fullchain.pem", "utf8");
 
-    httpsServer = https.createServer({
+    port = 443;
+    server = https.createServer({
         key,
         cert
     }, app);
-} catch {
-    httpsServer = undefined;
+} else {
+    server = http.createServer(app);
+    port = 8081;
 }
 
+const GATEWAY_TIMEOUT = 1000 * 60 * 20;
 const TOKEN_LIFESPAN = 3;
 const INVITE_TIMEOUT = 1000 * 60;
-const USERNAME_REXEX = /^\w{6,10}$/;
-const PASSWORD_REGEX = /^.{4,15}$/;
-const headless = process.argv[2] === "headless";
+const USERNAME_REXEX = /^\w{3,25}$/;
+const PASSWORD_REGEX = /^.{4,50}$/;
 const REMOVE_PROPERTIES = [
     "_id",
     "passwordHash",
@@ -181,7 +188,7 @@ function authenticate(username, password) {
         User.findOne({
             username
         }).then(user => {
-            if (validatePassword(user.passwordHash, password)) {
+            if (user && validatePassword(user.passwordHash, password)) {
                 user.expirationDate = getExpirationDate();
                 user.token = createId();
                 User.update(user, {
@@ -310,7 +317,13 @@ function deleteCertificates(username) {
         Certificate.find({
             username
         }).then(certificates => {
-            Promise.all(certificates.map(certificate => deleteCertificateById(certificate.id))).then(() => resolve());
+            Promise.all(certificates.map(certificate => {
+                if (certificate.id) {
+                    return deleteCertificateById(certificate.id);
+                } else {
+                    return Promise.resolve();
+                }
+            })).then(() => resolve());
         });
     });
 }
@@ -468,24 +481,19 @@ createEndpoint("get", "certificates", () => {
 createEndpoint("delete", "certificates/:id", req => {
     return new Promise(resolve => {
         Certificate.findOne({
-            id: req.parms.id
+            id: req.params.id
         }).then(certificate => {
             if (!req.user.isAdmin && certificate.username !== req.user.username) {
                 res.status(403);
                 resolve();
             }
-            deleteCertificateById(certificate.id).then(value => resolve(value));
+            if (certificate.id) {
+                deleteCertificateById(certificate.id).then(value => resolve(value));
+            } else {
+                resolve();
+            }
         })
     })
-});
-
-createEndpoint("delete", "users/:username/certificates", req => {
-    var username = req.parms.username;
-    if (!req.user.isAdmin && username !== req.user.username) {
-        res.status(403);
-        return Promise.resolve();
-    }
-    return deleteCertificates(username);
 });
 
 createEndpoint("get", "users/current", req => {
@@ -574,14 +582,11 @@ if (!headless) {
 }
 User.find().then(users => {
     if (!users.some(user => user.isAdmin)) {
-        console.log(createInviteCode(undefined, true));
+        console.log("No users registered. Start the client, go to the login page and add the following to the address bar:")
+        console.log("/" + createInviteCode(undefined, true));
     }
 });
 
-if (httpsServer) {
-    console.log("Running on Port: 443");
-    httpsServer.listen(443);
-} else {
-    console.log("Running on Port: 8081");
-    app.listen(8081);
-}
+server.setTimeout(GATEWAY_TIMEOUT);
+server.listen(port);
+console.log(`Running on Port: ${port}`);
