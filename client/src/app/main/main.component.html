@@ -41,6 +41,7 @@
   <div class="main-actions">
     <button mat-raised-button color="accent" (click)="logout()">Logout</button>
     <button mat-raised-button color="primary" (click)="getCertificate()">Connect</button>
+    <button mat-raised-button color="primary" (click)="mapNetworkDrive()">Map Network Drive</button>
     <button *ngIf="currentUser?.isAdmin" mat-raised-button color="primary" (click)="generateInviteLink()">Create Invite
       Link</button>
   </div>

@@ -96,7 +96,7 @@ export abstract class BaseService {
     const a = document.createElement('a')
     const objectUrl = URL.createObjectURL(response.body as any);
     a.href = objectUrl
-    a.download = /[\w\.]+$/.exec(response.headers.get("Content-Disposition") || "")?.join("") || "file";
+    a.download = /[\w\.\-_]+$/.exec(response.headers.get("Content-Disposition") || "")?.join("") || "file";
     a.click();
     URL.revokeObjectURL(objectUrl);
   }

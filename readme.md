@@ -60,3 +60,7 @@ from local-net to vpn-server port 8081 tcp
 - First ensure the client application is built by running `npm run build` in `./client` 
 - Run the server using `npm start` in `./server`
 - For Development, use `npm start headless` then run the angular app from `./client` using `npm start`
+
+## Hard Drives
+- Mount the main hard drive at /share/base in fstab
+- Once the mount is made, run setup-smb.sh to make the initial folders with various permissions.

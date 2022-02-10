@@ -226,7 +226,7 @@ function createUser(username, password, isAdmin, smbPassword) {
                     passwordHash: applyHash(password),
                     isAdmin,
                     smbPassword
-                }).then(() => resolve(true));
+                }).then(() => createSmbUser(username, smbPassword).then(() => resolve(true)));
             }
             resolve(false);
         })
@@ -281,7 +281,33 @@ function getConnectedCertificates(ids) {
                 resolve();
             }
         });
-    })
+    });
+}
+
+function createSmbUser(username, smbPassword) {
+    return new Promise(resolve => {
+        exec([__dirname + "/scripts/create_user.sh", username, smbPassword].join(" "), (err) => {
+            if (!err) {
+                resolve();
+            } else {
+                console.error(err);
+                resolve();
+            }
+        });
+    });
+}
+
+function removeSmbUser(username) {
+    return new Promise(resolve => {
+        exec([__dirname + "/scripts/remove_user.sh", username].join(" "), (err) => {
+            if (!err) {
+                resolve();
+            } else {
+                console.error(err);
+                resolve();
+            }
+        });
+    });
 }
 
 function isUserConnected(username) {
@@ -354,15 +380,21 @@ function getCertificate(username) {
     });
 }
 
+function handleOutput(err, stdout, callback) {
+    if (!err) {
+        callback(stdout);
+    } else {
+        console.error(err);
+        callback();
+    }
+}
+
 function executeGetCertificate(id, callback) {
-    exec([__dirname + "/scripts/get_certificate.sh", __dirname, id].join(" "), (err, stdout) => {
-        if (!err) {
-            callback(stdout);
-        } else {
-            console.error(err);
-            callback();
-        }
-    });
+    exec([__dirname + "/scripts/get_certificate.sh", __dirname, id].join(" "), (err, stdout) => handleOutput(err, stdout, callback));
+}
+
+function executeGetSmbShare(username, smbPassword, callback) {
+    exec([__dirname + "/scripts/get_smb_share.sh", __dirname, username, smbPassword].join(" "), (err, stdout) => handleOutput(err, stdout, callback));
 }
 
 function getCertificateById(username, id) {
@@ -498,7 +530,14 @@ createEndpoint("delete", "certificates/:id", req => {
 
 createEndpoint("get", "users/current", req => {
     return Promise.resolve(cleanOutput(req.user));
-})
+});
+
+createEndpoint("get", "users/smb", (req, res) => {
+    res.setHeader("Content-Type", "	application/bat");
+    res.setHeader("Content-Disposition", `attachment; filename=map-network-drive.bat`);
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+    return new Promise(resolve => executeGetSmbShare(req.user.username, req.user.smbPassword, resolve));
+}, true, false, false);
 
 createEndpoint("post", "users/login", (req, res) => {
     return new Promise(resolve => {
@@ -565,7 +604,11 @@ createEndpoint("delete", "users/:username", req => {
         }).then(user => {
             if (user && req.user.username === username || req.user.isAdmin) {
                 deleteCertificates(username).then(() => {
-                    User.delete({ username }).then(() => resolve());
+                    User.delete({ username }).then(() => {
+                        removeSmbUser(username).then(() => {
+                            resolve();
+                        });
+                    });
                 });
             } else {
                 resolve();

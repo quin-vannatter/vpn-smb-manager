@@ -53,6 +53,10 @@ export class UserService extends BaseService {
     return this.currentUserSubject.asObservable();
   }
 
+  getSmb(): Observable<void> {
+    return this.getDownloadFile("smb");
+  }
+
   getUsers(): Observable<User[]> {
     return this.get<User[]>();
   }

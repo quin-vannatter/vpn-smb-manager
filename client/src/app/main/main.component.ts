@@ -99,6 +99,11 @@ export class MainComponent {
     return this.currentUser?.isAdmin || this.currentUser?.username === username;
   }
 
+  mapNetworkDrive() {
+    var dialogRef = this.dialog.open(LoadingComponent)
+    this.userService.getSmb().subscribe(() => dialogRef.close());
+  }
+
   deleteUser(user: User) {
     if (this.currentUser?.username === user.username || this.currentUser?.isAdmin) {
       this.userService.deleteUser(user.username).subscribe(() => {

@@ -15,7 +15,7 @@ scp pi@ca:/usr/share/easy-rsa/pki/ca.crt pi@ca:/usr/share/easy-rsa/pki/private/v
 sudo mv /tmp/ca-config/* /etc/openvpn/server/
 
 # Install the firewall (ufw) and OpenVPN
-sudo apt-get install npm openvpn ufw sqlite3
+sudo apt-get install npm openvpn ufw sqlite3 samba transmission-cli
 
 # Generate a ta.key
 openvpn --genkey secret ta.key
@@ -41,3 +41,6 @@ npm install
 cd ../client
 npm install
 npm run build
+
+# Set up samba server conf
+sudo cp ./smb-config/smb.conf /etc/samba/
