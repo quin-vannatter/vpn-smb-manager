@@ -12,8 +12,6 @@ export class PasswordPromptComponent {
 
   passwordInput?: string;
 
-  @ViewChild("inviteCode", { static: false }) inviteCodeElement?: ElementRef;
-
   constructor(private dialogRef: MatDialogRef<PasswordPromptComponent>) { }
 
   close(): void {

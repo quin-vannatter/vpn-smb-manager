@@ -1,48 +1,55 @@
-<div class="main-container">
-  <table mat-table [dataSource]="userTableData" class="mat-elevation-z2">
-    <ng-container matColumnDef="username">
-      <td mat-cell *matCellDef="let element">
+<div class="container">
+  <div>
+    <div class="user-content-row" *ngFor="let element of userTableData; trackBy:identify">
+      <div *ngIf="element.isConnected">
+        <mat-icon [ngStyle]="{ 'color': '#46d61e' }">check_circle</mat-icon>
+      </div>
+      <div *ngIf="!element.isConnected">
+        <mat-icon [ngStyle]="{ 'color': '#b51616' }">highlight_off</mat-icon>
+      </div>
+      <div class="user-content-username">
         <span>{{element.username}}</span>
         <mat-icon [ngStyle]="{ 'color': '#d6c41e' }" *ngIf="element.isAdmin">grade</mat-icon>
-      <td>
-    </ng-container>
-    <ng-container matColumnDef="isConnected">
-      <td mat-cell *matCellDef="let element">
-        <div class="main-row-connected">
-          <div *ngIf="element.isConnected">
-            <mat-icon [ngStyle]="{ 'color': '#46d61e' }">check_circle</mat-icon><span>Connected</span>
-          </div>
-          <div *ngIf="!element.isConnected">
-            <mat-icon [ngStyle]="{ 'color': '#b51616' }">highlight_off</mat-icon><span>Disconnected</span>
-          </div>
-        </div>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="actions">
-      <td mat-cell *matCellDef="let element">
-        <div class="main-row-actions">
-          <button mat-raised-button color="accent" (click)="viewCertificates(element.certificates)"
-            [disabled]="!hasAccess(element.username) || !element.certificates.length">
-            Existing Connections
-          </button>
-          <button mat-raised-button color="warn" (click)="deleteUser(element)"
-            [disabled]="!hasAccess(element.username)">
-            Delete User
-          </button>
-          <button *ngIf="currentUser?.isAdmin" mat-raised-button color="primary" (click)="promoteUser(element)"
-            [disabled]="element.isAdmin">
-            Promote User
-          </button>
-        </div>
-      </td>
-    </ng-container>
-    <tr mat-row *matRowDef="let row; columns: columns"></tr>
-  </table>
-  <div class="main-actions">
-    <button mat-raised-button color="accent" (click)="logout()">Logout</button>
-    <button mat-raised-button color="primary" (click)="getCertificate()">Connect</button>
-    <button mat-raised-button color="primary" (click)="mapNetworkDrive()">Map Network Drive</button>
-    <button *ngIf="currentUser?.isAdmin" mat-raised-button color="primary" (click)="generateInviteLink()">Create Invite
-      Link</button>
+      </div>
+      <button *ngIf="currentUser?.isAdmin" class="user-content-actions" mat-icon-button [matMenuTriggerFor]="menu">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="deleteUser(element)"
+          *ngIf="currentUser?.isAdmin">
+          <mat-icon>delete</mat-icon> Delete User
+        </button>
+        <button mat-menu-item (click)="promoteUser(element)"
+          *ngIf="!element.isAdmin && currentUser?.isAdmin">
+          <mat-icon>grade</mat-icon> Promote User
+        </button>
+        <button mat-menu-item (click)="clearCertificates(element)"
+          *ngIf="currentUser?.isAdmin && element.certificates.length">
+          <mat-icon>clear</mat-icon> Clear OVPN Profiles
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+  <div class="action-content">
+    <button mat-raised-button color="primary" (click)="logout()"><mat-icon>logout</mat-icon> Logout</button>
+    <a mat-raised-button href="{{getOpenVpnLink()}}">Open VPN Client</a>
+    <button mat-raised-button mat-icon-button [matMenuTriggerFor]="connect">
+      <mat-icon>router</mat-icon> OVPN Profiles
+    </button>
+    <mat-menu #connect="matMenu">
+      <button mat-menu-item (click)="getCertificate()"
+        *ngIf="currentUser?.certificates?.length">
+        <mat-icon>download</mat-icon> Get Existing OVPN Profile
+      </button>
+      <button mat-menu-item (click)="createCertificate()">
+        <mat-icon>add</mat-icon> Create New OVPN Profile
+      </button>
+      <button mat-menu-item (click)="clearCertificates(currentUser)"
+        *ngIf="currentUser?.certificates?.length">
+        <mat-icon>clear</mat-icon> Clear OVPN Profiles
+      </button>
+    </mat-menu>
+    <button mat-raised-button (click)="mapNetworkDrive()"><mat-icon>storage</mat-icon> Map Drive</button>
+    <button *ngIf="currentUser?.isAdmin" mat-raised-button (click)="generateInviteLink()"><mat-icon>email</mat-icon> Invite</button>
   </div>
 </div>

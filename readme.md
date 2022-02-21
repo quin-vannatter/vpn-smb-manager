@@ -35,21 +35,22 @@ COMMIT
 
 - Create rules for the following using the following command `sudo ufw allow proto <tcp/udp> from <ip/any> to <outgoing> port <port>`
 
-vpn-server -> Refers to the IP address of the VPN server in relation to the router. Eg. 192.168.0.112
-ca-server -> Refers to the IP address of the CA server in relation to the router. Eg. 192.168.0.113
-local-net -> Refers to the router network with the subnet of /24 E.g 192.168.0.0/24
-
 ```
-from local-net to vpn-server port 445 tcp
-from 10.8.0.0/24 to 10.8.0.1 port 445 tcp
-from local-net to vpn-server port 22 tcp
-from any to vpn-server port 80 tcp
-from any to vpn-server port 443 tcp
-from any to vpn-server port 1194 udp
-
-(For Development)
-from local-net to vpn-server port 8080 tcp
-from local-net to vpn-server port 8081 tcp
+To                         Action      From
+--                         ------      ----
+192.168.0.105 445/tcp      ALLOW       192.168.0.0/24
+192.168.0.105 22/tcp       ALLOW       192.168.0.240
+192.168.0.105 80/tcp       ALLOW       Anywhere
+192.168.0.105 443/tcp      ALLOW       Anywhere
+192.168.0.105 8080/tcp     ALLOW       192.168.0.0/24
+192.168.0.105 8081/tcp     ALLOW       192.168.0.0/24
+192.168.0.105 1194/udp     ALLOW       Anywhere
+192.168.0.105 22/tcp       ALLOW       192.168.0.241
+10.8.0.0/24 1:65535/tcp    ALLOW       10.8.0.0/24
+10.8.0.0/24 1:65535/udp    ALLOW       10.8.0.0/24
+192.168.0.105 1195/udp     ALLOW       Anywhere
+10.7.0.0/24 1:65535/tcp    ALLOW       10.7.0.0/24
+10.7.0.0/24 1:65535/udp    ALLOW       10.7.0.0/24
 ```
 
 ## HTTPS Certificates
@@ -63,4 +64,11 @@ from local-net to vpn-server port 8081 tcp
 
 ## Hard Drives
 - Mount the main hard drive at /share/base in fstab
+- FOR THE LOVE OF GOD, FORMAT AS EXT4. please and thank you.
 - Once the mount is made, run setup-smb.sh to make the initial folders with various permissions.
+
+## Database
+- Running reset-database.sh will delete and create the database. Use it to refresh data. However any unix/smb/vpn users won't be deleted this way.
+
+## Downloading Torrents
+- 

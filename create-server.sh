@@ -12,21 +12,20 @@ mkdir -p /tmp/ca-config
 scp pi@ca:/usr/share/easy-rsa/pki/ca.crt pi@ca:/usr/share/easy-rsa/pki/private/vpn-server.key pi@ca:/usr/share/easy-rsa/pki/issued/vpn-server.crt /tmp/ca-config/
 
 # Move the certs and keys to the VPN server
-sudo mv /tmp/ca-config/* /etc/openvpn/server/
+sudo mv /tmp/ca-config/* /etc/openvpn/
 
 # Install the firewall (ufw) and OpenVPN
 sudo apt-get install npm openvpn ufw sqlite3 samba transmission-cli
 
 # Generate a ta.key
 openvpn --genkey secret ta.key
-sudo mv ./ta.key /etc/openvpn/server/
+sudo mv ./ta.key /etc/openvpn/
 
 # Copy the server.conf to the VPN Server
-sudo cp ./vpn-config/server.conf /etc/openvpn/server/
+sudo cp ./vpn-config/*.conf /etc/openvpn/
 
 # Start and enable the VPN
-sudo systemctl start openvpn-server@server.service
-sudo systemctl enable openvpn-server@server.service
+sudo service openvpn restart
 
 # Install node dependencies
 sudo npm install -g n
@@ -43,4 +42,13 @@ npm install
 npm run build
 
 # Set up samba server conf
+cd ..
 sudo cp ./smb-config/smb.conf /etc/samba/
+
+echo $PWD
+
+# Create bridge and eth interfaces to facilitate communication
+sudo cp ./create-interfaces /etc/init.d/
+sudo chmod +x /etc/init.d/create-interfaces
+sudo update-rc.d create-interfaces defaults
+sudo service create-interfaces start

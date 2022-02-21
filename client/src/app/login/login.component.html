@@ -3,9 +3,9 @@
     <mat-card-title class="user-card-title">{{ inviteCode ? "Create New User" : "Login" }}</mat-card-title>
     <mat-card-content class="user-card-content">
       <mat-form-field>
-        <input matInput [formControl]="username" placeholder="Username" pattern="^\w{3,25}$" required>
+        <input matInput [formControl]="username" placeholder="Username" pattern="^[a-z_]{3,25}$" required>
         <mat-error *ngIf="username.errors?.['pattern']">
-          Username must be 3 - 25 alphanumeric characters. Underscores are accepted too.
+          Username must be 3 - 25 lowercase letters. Underscores are ok.
         </mat-error>
       </mat-form-field>
       <mat-form-field>

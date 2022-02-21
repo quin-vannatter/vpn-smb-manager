@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormControl } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import { LoadingComponent } from '../loading/loading.component';
 import { UserService } from '../services/user.service';
 
 @Component({
@@ -20,7 +22,7 @@ export class LoginComponent {
   });
   inviteCode?: string | null;
 
-  constructor(private userService: UserService, route: ActivatedRoute, private router: Router) {
+  constructor(private userService: UserService, route: ActivatedRoute, private router: Router, private dialog: MatDialog) {
     route.params.subscribe(params => {
       this.inviteCode = params["inviteCode"];
     });
@@ -32,12 +34,19 @@ export class LoginComponent {
 
   login(): void {
     if (this.username.valid && this.password.valid) {
+      var dialog = this.dialog.open(LoadingComponent);
       var userArgs: [string, string] = [this.username.value, this.password.value];
       if (!this.inviteCode) {
-        this.userService.login(...userArgs).subscribe(() => this.router.navigate(["home"]));
+        this.userService.login(...userArgs).subscribe(() => {
+          dialog.close();
+          this.router.navigate(["home"]);
+        });
       } else {
         this.userService.createUser(this.inviteCode, ...userArgs).subscribe(() => {
-          this.userService.login(...userArgs).subscribe(() => this.router.navigate(["home"]));
+          this.userService.login(...userArgs).subscribe(() => {
+            dialog.close();
+            this.router.navigate(["home"]);
+          });
         })
       }
     }

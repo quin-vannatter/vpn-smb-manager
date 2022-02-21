@@ -4,7 +4,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatTableModule } from '@angular/material/table';
+import { MatMenuModule } from '@angular/material/menu';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
@@ -20,9 +20,9 @@ import { InviteCodeComponent } from './invite-code/invite-code.component';
 import { LoginComponent } from './login/login.component';
 import { MainComponent } from './main/main.component';
 import { CertificateService } from './services/certificate.service';
-import { CertificatesComponent } from './certificates/certificates.component';
 import { PasswordPromptComponent } from './password-prompt/password-prompt.component';
 import { LoadingComponent } from './loading/loading.component';
+import { ServerInfoComponent } from './server-info/server-info.component';
 
 @NgModule({
   declarations: [
@@ -30,9 +30,9 @@ import { LoadingComponent } from './loading/loading.component';
     InviteCodeComponent,
     LoginComponent,
     MainComponent,
-    CertificatesComponent,
     PasswordPromptComponent,
-    LoadingComponent
+    LoadingComponent,
+    ServerInfoComponent
   ],
   imports: [
     BrowserModule,
@@ -42,7 +42,7 @@ import { LoadingComponent } from './loading/loading.component';
     FormsModule,
     ReactiveFormsModule,
 
-    MatTableModule,
+    MatMenuModule,
     MatCardModule,
     MatInputModule,
     MatButtonModule,

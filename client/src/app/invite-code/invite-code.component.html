@@ -1,7 +1,7 @@
 <div class="invite-link-container">
     <h3>Invite Link:</h3>
     <mat-form-field class="invite-link-input" appearance="fill">
-        <input #inviteCode matInput readonly [ngModel]="inviteLink" (click)="selectValue()">
+        <input #inviteCode matInput readonly [ngModel]="inviteLink" (click)="selectValue($event.target)">
     </mat-form-field>
     <div>
       <button mat-raised-button color="primary" (click)="close()">Close</button>

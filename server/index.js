@@ -52,54 +52,77 @@ function Schema(tableName, properties, db) {
     var getValues = object => propMap.map(property => formatValue(object[property.jsonKey]));
     var newSchema = {
         findOne: (search) => {
-            return new Promise(resolve => {
-                newSchema.find(search).then(rows => resolve(rows.length ? rows[0] : null));
-            })
+            try
+            {
+                return new Promise(resolve => {
+                    newSchema.find(search).then(rows => resolve(rows.length ? rows[0] : null));
+                });
+            }
+            catch {
+                return Promise.resolve(null)
+            }
         },
         find: (search) => {
-            return new Promise(resolve => {
-                var params = createSqlStatement(selectStatement, search);
-                db.all(params.sql, params.values, (err, rows) => {
-                    if (err) {
-                        console.error(err);
-                    }
-                    resolve(rows);
+            try {
+                return new Promise(resolve => {
+                    var params = createSqlStatement(selectStatement, search);
+                    db.all(params.sql, params.values, (err, rows) => {
+                        if (err) {
+                            console.error(err);
+                        }
+                        resolve(rows);
+                    });
                 });
-            })
+            }
+            catch {
+                return Promise.resolve([]);
+            }
         },
         create: (object) => {
-            return new Promise(resolve => {
-                var values = getValues(object);
-                db.run(insertStatement, values, err => {
-                    if (err) {
-                        console.error(err);
-                    }
-                    resolve();
+            try {
+                return new Promise(resolve => {
+                    var values = getValues(object);
+                    db.run(insertStatement, values, err => {
+                        if (err) {
+                            console.error(err);
+                        }
+                        resolve();
+                    });
                 });
-            });
+            } catch {
+                return Promise.resolve();
+            }
         },
         update: (object, search) => {
-            return new Promise(resolve => {
-                var values = getValues(object);
-                var params = createSqlStatement(updateStatement, search);
-                db.run(params.sql, values.concat(params.values), err => {
-                    if (err) {
-                        console.error(err);
-                    }
-                    resolve();
-                })
-            });
+            try {
+                return new Promise(resolve => {
+                    var values = getValues(object);
+                    var params = createSqlStatement(updateStatement, search);
+                    db.run(params.sql, values.concat(params.values), err => {
+                        if (err) {
+                            console.error(err);
+                        }
+                        resolve();
+                    })
+                });
+            } catch {
+                return Promise.resolve();
+            }
         },
         delete: (search) => {
-            return new Promise(resolve => {
-                var params = createSqlStatement(removeStatement, search);
-                db.run(params.sql, params.values, err => {
-                    if (err) {
-                        console.error(err);
-                    }
-                    resolve();
+            try {
+                return new Promise(resolve => {
+                    var params = createSqlStatement(removeStatement, search);
+                    db.run(params.sql, params.values, err => {
+                        if (err) {
+                            console.error(err);
+                        }
+                        resolve();
+                    });
                 });
-            });
+            } catch {
+                return Promise.resolve();
+            }
         }
     }
     return newSchema;
@@ -130,14 +153,13 @@ if(!headless) {
 const GATEWAY_TIMEOUT = 1000 * 60 * 20;
 const TOKEN_LIFESPAN = 3;
 const INVITE_TIMEOUT = 1000 * 60;
-const USERNAME_REXEX = /^\w{3,25}$/;
+const USERNAME_REXEX = /^[a-z_]{3,25}$/;
 const PASSWORD_REGEX = /^.{4,50}$/;
 const REMOVE_PROPERTIES = [
     "_id",
     "passwordHash",
     "expirationDate",
-    "token",
-    "smbPassword"
+    "token"
 ];
 
 const Certificate = Schema("CERTIFICATES", [
@@ -297,6 +319,19 @@ function createSmbUser(username, smbPassword) {
     });
 }
 
+function updateUserDirectories(username) {
+    return new Promise(resolve => {
+        exec([__dirname + "/scripts/update_shares.sh", username].join(" "), (err) => {
+            if (!err) {
+                resolve();
+            } else {
+                console.error(err);
+                resolve();
+            }
+        });
+    })
+}
+
 function removeSmbUser(username) {
     return new Promise(resolve => {
         exec([__dirname + "/scripts/remove_user.sh", username].join(" "), (err) => {
@@ -356,17 +391,15 @@ function deleteCertificates(username) {
 
 function deleteCertificateById(id) {
     return new Promise(resolve => {
-        exec([__dirname + "/scripts/revoke_certificate.sh", __dirname, id].join(" "), err => {
-            if (!err) {
-                Certificate.delete({
-                    id
-                }).then(() => resolve());
-            }
+        exec([__dirname + "/scripts/revoke_certificate.sh", __dirname, id].join(" "), () => {
+            Certificate.delete({
+                id
+            }).then(() => resolve());
         });
     })
 }
 
-function getCertificate(username) {
+function getCertificate(username, type) {
     return new Promise(resolve => {
         getUnusedCertificates(username).then(certificates => {
             var id;
@@ -375,7 +408,7 @@ function getCertificate(username) {
             } else {
                 id = createId();
             }
-            executeGetCertificate(id, resolve);
+            executeGetCertificate(id, type, resolve);
         })
     });
 }
@@ -389,21 +422,21 @@ function handleOutput(err, stdout, callback) {
     }
 }
 
-function executeGetCertificate(id, callback) {
-    exec([__dirname + "/scripts/get_certificate.sh", __dirname, id].join(" "), (err, stdout) => handleOutput(err, stdout, callback));
+function executeGetCertificate(id, type, callback) {
+    exec([__dirname + "/scripts/get_certificate.sh", __dirname, id, type].join(" "), (err, stdout) => handleOutput(err, stdout, callback));
 }
 
 function executeGetSmbShare(username, smbPassword, callback) {
     exec([__dirname + "/scripts/get_smb_share.sh", __dirname, username, smbPassword].join(" "), (err, stdout) => handleOutput(err, stdout, callback));
 }
 
-function getCertificateById(username, id) {
+function getCertificateById(username, type, id) {
     return new Promise(resolve => {
         Certificate.findOne({
             id
         }).then(certificate => {
             if (certificate && certificate.username === username) {
-                executeGetCertificate(id, resolve);
+                executeGetCertificate(id, type, resolve);
             }
         });
     });
@@ -477,23 +510,24 @@ createEndpoint("get", "users", getUsers);
 createCertificateEndpoint("post", "certificates", (req, res) => {
     return new Promise(resolve => {
         var password = req.body.password;
+        var type = req.body.type === "tap" ? "tap" : "tun";
         if (!validatePassword(req.user.passwordHash, password) || !password) {
             res.status(401);
             resolve();
         } else {
             createCertificate(req.user.username, password).then(id => {
-                getCertificateById(req.user.username, id).then(result => resolve(result));
+                getCertificateById(req.user.username, type, id).then(result => resolve(result));
             });
         }
     });
 });
 
-createCertificateEndpoint("get", "certificates/download", req => {
-    return getCertificate(req.user.username);
+createCertificateEndpoint("get", "certificates/download/:type", req => {
+    return getCertificate(req.user.username, req.params.type === "tap" ? "tap" : "tun");
 });
 
-createCertificateEndpoint("get", "certificates/:id/download", req => {
-    return getCertificateById(req.user.username, req.params.id);
+createCertificateEndpoint("get", "certificates/download/:id/:type", req => {
+    return getCertificateById(req.user.username, req.params.type === "tap" ? "tap" : "tun", req.params.id);
 });
 
 createEndpoint("get", "certificates", () => {
@@ -534,7 +568,7 @@ createEndpoint("get", "users/current", req => {
 
 createEndpoint("get", "users/smb", (req, res) => {
     res.setHeader("Content-Type", "	application/bat");
-    res.setHeader("Content-Disposition", `attachment; filename=map-network-drive.bat`);
+    res.setHeader("Content-Disposition", `attachment; filename=${req.user.username}-drive.bat`);
     res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
     return new Promise(resolve => executeGetSmbShare(req.user.username, req.user.smbPassword, resolve));
 }, true, false, false);
@@ -545,9 +579,13 @@ createEndpoint("post", "users/login", (req, res) => {
         var password = req.body.password;
         authenticate(username, password).then(id => {
             res.status(id ? 200 : 401);
-            resolve({
-                id
-            })
+            if (id) {
+                updateUserDirectories(username).then(() => resolve({ id }));
+            } else {
+                resolve({
+                    id
+                });
+            }
         });
     });
 }, false);

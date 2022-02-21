@@ -1,0 +1,21 @@
+<div class="container">
+    <h3>IP Address:</h3>
+    <mat-form-field class="invite-link-input" appearance="fill">
+        <input matInput readonly [ngModel]="ipAddress" (click)="selectValue($event.target)">
+    </mat-form-field>
+    <h3>Folder Path:</h3>
+    <mat-form-field class="invite-link-input" appearance="fill">
+        <input matInput readonly [ngModel]="folderPath" (click)="selectValue($event.target)">
+    </mat-form-field>
+    <h3>Username:</h3>
+    <mat-form-field class="invite-link-input" appearance="fill">
+        <input matInput readonly [ngModel]="username" (click)="selectValue($event.target)">
+    </mat-form-field>
+    <h3>Password:</h3>
+    <mat-form-field class="invite-link-input" appearance="fill">
+        <input matInput readonly [ngModel]="password" (click)="selectValue($event.target)">
+    </mat-form-field>
+    <div>
+      <button mat-raised-button color="primary" (click)="close()">Close</button>
+    </div>
+</div>

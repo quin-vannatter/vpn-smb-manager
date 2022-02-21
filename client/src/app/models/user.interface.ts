@@ -5,4 +5,5 @@ export interface User {
     isAdmin: boolean;
     isConnected: boolean;
     certificates: Certificate[];
+    smbPassword: string;
 }

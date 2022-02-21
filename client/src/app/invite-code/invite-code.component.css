@@ -1,7 +1,8 @@
-.invite-link-container {
+.container {
     padding: 10px;
 }
 
 .invite-link-input {
     width: fit-content;
+    font-size: large;
 }

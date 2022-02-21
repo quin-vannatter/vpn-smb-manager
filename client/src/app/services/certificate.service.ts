@@ -21,20 +21,24 @@ export class CertificateService extends BaseService {
     super(http, router, dialog);
   }
 
+  public isMobile(): boolean {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
   getCertificates(): Observable<Certificate[] | undefined> {
     return this.get<Certificate[] | undefined>();
   }
 
   getCertificate(): void {
-    this.getDownloadFile("download");
+    this.getDownloadFile(`download//${this.isMobile() ? "tun" : "tap"}`);
   }
 
   getCertificateById(id: string): Observable<void> {
-    return this.getDownloadFile(`${id}/download`);
+    return this.getDownloadFile(`download/${id}/${this.isMobile() ? "tun" : "tap"}`);
   }
 
   createCertificate(password: string): Observable<void> {
-    return this.postDownloadFile({ password: btoa(password)});
+    return this.postDownloadFile({ password: btoa(password), type: this.isMobile() ? "tun" : "tap"});
   }
 
   deleteCertificate(id: string): Observable<void> {

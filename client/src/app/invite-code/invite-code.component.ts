@@ -1,5 +1,6 @@
-import { Component, ElementRef, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
+import { AppComponent } from '../app.component';
 import { UserService } from '../services/user.service';
 
 @Component({
@@ -7,28 +8,21 @@ import { UserService } from '../services/user.service';
   templateUrl: './invite-code.component.html',
   styleUrls: ['./invite-code.component.css']
 })
-export class InviteCodeComponent implements OnInit {
+export class InviteCodeComponent extends AppComponent implements OnInit {
 
   inviteLink?: string;
 
   @ViewChild("inviteCode", { static: false }) inviteCodeElement?: ElementRef;
 
-  constructor(private userService: UserService, private dialogRef: MatDialogRef<InviteCodeComponent>) { }
+  constructor(private userService: UserService, private dialogRef: MatDialogRef<InviteCodeComponent>) {
+    super();
+  }
 
   ngOnInit(): void {
     this.userService.invite().subscribe(inviteLink => {
       this.inviteLink = inviteLink;
-      this.selectValue();
+      this.selectValue((<EventTarget><unknown>this.inviteCodeElement?.nativeElement), inviteLink);
     })
-  }
-
-  selectValue(): void {
-    if (this.inviteCodeElement) {
-      let element = (<HTMLInputElement>this.inviteCodeElement.nativeElement);
-      element.value = this.inviteLink || "";
-      element.focus();
-      element.select();
-    }
   }
 
   close(): void {

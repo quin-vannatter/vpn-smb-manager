@@ -1,0 +1,30 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Required-Start:    $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO
+
+case "$1" in
+    start)
+        ip link add eth10 type dummy
+	    ip tuntap add tap0 mode tap
+        brctl addbr br0
+        brctl addif br0 tap0
+        brctl addif br0 eth10
+        ifconfig tap0 0.0.0.0 promisc up
+        ifconfig br0 10.8.0.1 netmask 255.255.255.0
+        ;;
+    stop)
+        ip link set br0 down
+        brctl delbr br0
+        ip link delete eth10
+        ip link delete tap0
+        ;;
+    *)
+        echo "Usage: /etc/init.d/create-interfaces {start|stop}"
+        exit 1
+    ;;
+esac
+    

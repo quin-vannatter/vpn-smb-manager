@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { CertificatesComponent } from '../certificates/certificates.component';
+import { zip } from 'rxjs';
 import { InviteCodeComponent } from '../invite-code/invite-code.component';
 import { LoadingComponent } from '../loading/loading.component';
-import { Certificate } from '../models/certificate.interface';
 import { User } from '../models/user.interface';
 import { PasswordPromptComponent } from '../password-prompt/password-prompt.component';
+import { ServerInfoComponent } from '../server-info/server-info.component';
 import { CertificateService } from '../services/certificate.service';
 import { UserService } from '../services/user.service';
 
@@ -17,7 +17,6 @@ const PING_INT = 5000;
   styleUrls: ['./main.component.css']
 })
 export class MainComponent {
-  columns: string[] = ['username', 'isConnected', 'actions'];
   currentUser?: User;
   userTableData: User[] = [];
   pingInt?: any;
@@ -35,6 +34,16 @@ export class MainComponent {
     userService.getCurrentUser().subscribe(user => this.currentUser = user);
   }
 
+  getOpenVpnLink(): string {
+    if (/Android/.test(navigator.userAgent)) {
+      return "https://play.google.com/store/apps/details?id=net.openvpn.openvpn";
+    } else if(/iPhone|iPad/.test(navigator.userAgent)) {
+      return "https://apps.apple.com/us/app/openvpn-connect/id590379981";
+    } else {
+      return "https://swupdate.openvpn.org/community/releases/OpenVPN-2.5.5-I602-amd64.msi";
+    }
+  }
+
   getCurrentUser(): void {
     this.userService.getCurrentUser().subscribe(user => {
       this.currentUser = user;
@@ -46,68 +55,75 @@ export class MainComponent {
     this.userService.getUsers().subscribe(users => {
       this.certificateService.getCertificates().subscribe(certificates => {
         if (certificates) {
-          users.forEach(user => user.certificates = certificates.filter(certificate => certificate.username === user.username));
+          users.forEach(user => {
+            user.certificates = certificates.filter(certificate => certificate.username === user.username);
+            if (user.username === this.currentUser?.username) {
+              this.currentUser.certificates = user.certificates;
+            }
+          });
         }
         this.userTableData = users;
+        setTimeout(() => this.getTableData(), PING_INT);
       })
-    })
-    if(this.pingInt !== undefined) {
-      clearInterval(this.pingInt);
-    }
-    this.pingInt = setInterval(() => this.getTableData(), PING_INT);
+    });
   }
 
-  viewCertificates(certificates: Certificate[] | undefined) {
-    if (certificates) {
-      var dialogRef = this.dialog.open(CertificatesComponent, {
-        width: "100%",
-        data: {
-          currentUser: this.currentUser,
-          certificateTableData: certificates
-        }
-      });
-      dialogRef.afterClosed().subscribe(() => {
-        this.getTableData();
-      })
-    }
+  identify(_: any, item: User) {
+    return item.username;
   }
 
   generateInviteLink() {
     this.dialog.open(InviteCodeComponent);
   }
 
-  getCertificate() {
-    if (this.currentUser?.username) {
-      this.certificateService.getCertificates().subscribe(certificates => {
-        if (this.currentUser?.username) {
-          if (certificates?.some(certificate => !certificate.isConnected && certificate.username === this.currentUser?.username)) {
-            this.certificateService.getCertificate();
-          } else {
-            this.dialog.open(PasswordPromptComponent).afterClosed().subscribe(password => {
-              if (password && this.currentUser?.username) {
-                var dialogRef = this.dialog.open(LoadingComponent)
-                this.certificateService.createCertificate(password).subscribe(() => dialogRef.close());
-              }
-            });
-          }
-        }
-      })
-    }
-  }
-
-  hasAccess(username: string) {
-    return this.currentUser?.isAdmin || this.currentUser?.username === username;
+  getServerLink() {
+    const username = this.currentUser?.username;
+    return `smb://${username}:${this.currentUser?.smbPassword}@10.8.0.1/share/users/${username}`;
   }
 
   mapNetworkDrive() {
-    var dialogRef = this.dialog.open(LoadingComponent)
-    this.userService.getSmb().subscribe(() => dialogRef.close());
+    if(this.certificateService.isMobile()) {
+      this.dialog.open(ServerInfoComponent, {
+        data: this.currentUser
+      });
+    } else {
+      var dialogRef = this.dialog.open(LoadingComponent);
+      this.userService.getSmb().subscribe(() => dialogRef.close());
+    }
+  }
+
+  clearCertificates(user: User | undefined) {
+    if (user) {
+      var dialogRef = this.dialog.open(LoadingComponent);
+      zip(user.certificates.map(certificate => this.certificateService.deleteCertificate(certificate.id))).subscribe(() => {
+        this.getTableData();
+        dialogRef.close();
+      });
+    }
+  }
+
+  createCertificate() {
+    this.dialog.open(PasswordPromptComponent).afterClosed().subscribe(password => {
+      if (password && this.currentUser?.username) {
+        var dialogRef = this.dialog.open(LoadingComponent);
+        this.certificateService.createCertificate(password).subscribe(() => {
+          this.getTableData();
+          dialogRef.close();
+        });
+      }
+    });
+  }
+
+  getCertificate() {
+    this.certificateService.getCertificate();
   }
 
   deleteUser(user: User) {
     if (this.currentUser?.username === user.username || this.currentUser?.isAdmin) {
+      var dialogRef = this.dialog.open(LoadingComponent);
       this.userService.deleteUser(user.username).subscribe(() => {
         this.getTableData();
+        dialogRef.close();
       });
     }
   }
