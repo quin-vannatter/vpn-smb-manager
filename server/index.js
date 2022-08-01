@@ -1,13 +1,13 @@
-var express = require("express");
-var https = require("https");
-var http = require("http");
-var fs = require("fs");
-var crypto = require("crypto");
-var compression = require("compression");
-var {
+let express = require("express");
+let https = require("https");
+let http = require("http");
+let fs = require("fs");
+let crypto = require("crypto");
+let compression = require("compression");
+let {
     exec
 } = require("child_process");
-var sqlite3 = require("sqlite3").verbose();
+let sqlite3 = require("sqlite3").verbose();
 
 const headless = process.argv[2] === "headless";
 
@@ -18,22 +18,22 @@ let db = new sqlite3.Database("./vpn-smb-manager.db", sqlite3.OPEN_READWRITE, er
 });
 
 function Schema(tableName, properties, db) {
-    var propMap = properties.map(key => ({
+    let propMap = properties.map(key => ({
         jsonKey: key,
         sqlKey: key.match(/(^[a-z]+|[A-Z][a-z]*)/g).map(value => value.toUpperCase()).join("_")
     }));
-    var insertStatement = `INSERT INTO ${tableName} (${propMap.map(property => property.sqlKey).join(", ")}) VALUES (${new Array(propMap.length).fill("?").join(", ")});`;
-    var updateStatement = `UPDATE ${tableName} SET ${propMap.map(property => `${property.sqlKey} = ? `).join(", ")}`;
-    var removeStatement = `DELETE FROM ${tableName}`;
-    var selectStatement = `SELECT ${propMap.map(property => `${property.sqlKey} ${property.jsonKey}`).join(", ")} FROM ${tableName}`;
-    var formatValue = (value) => {
+    let insertStatement = `INSERT INTO ${tableName} (${propMap.map(property => property.sqlKey).join(", ")}) VALUES (${new Array(propMap.length).fill("?").join(", ")});`;
+    let updateStatement = `UPDATE ${tableName} SET ${propMap.map(property => `${property.sqlKey} = ? `).join(", ")}`;
+    let removeStatement = `DELETE FROM ${tableName}`;
+    let selectStatement = `SELECT ${propMap.map(property => `${property.sqlKey} ${property.jsonKey}`).join(", ")} FROM ${tableName}`;
+    let formatValue = (value) => {
         if (typeof (value) === "boolean") {
             return value ? 1 : 0;
         }
         return value && value.toString() || null;
     }
-    var createSqlStatement = (sql, object) => {
-        var values = [];
+    let createSqlStatement = (sql, object) => {
+        let values = [];
         if (!object) {
             return {
                 sql: `${sql}`,
@@ -42,15 +42,15 @@ function Schema(tableName, properties, db) {
         }
         return {
             sql: `${sql} WHERE ${Object.keys(object).filter(key => propMap.some(property => property.jsonKey === key)).map(key => {
-                var property = propMap.find(property => property.jsonKey ===  key);
+                let property = propMap.find(property => property.jsonKey ===  key);
                 values.push(formatValue(object[key]));
                 return `${property.sqlKey} = ?`;
             }).join(" AND ")};`,
             values
         };
     }
-    var getValues = object => propMap.map(property => formatValue(object[property.jsonKey]));
-    var newSchema = {
+    let getValues = object => propMap.map(property => formatValue(object[property.jsonKey]));
+    let newSchema = {
         findOne: (search) => {
             try
             {
@@ -65,7 +65,7 @@ function Schema(tableName, properties, db) {
         find: (search) => {
             try {
                 return new Promise(resolve => {
-                    var params = createSqlStatement(selectStatement, search);
+                    let params = createSqlStatement(selectStatement, search);
                     db.all(params.sql, params.values, (err, rows) => {
                         if (err) {
                             console.error(err);
@@ -81,7 +81,7 @@ function Schema(tableName, properties, db) {
         create: (object) => {
             try {
                 return new Promise(resolve => {
-                    var values = getValues(object);
+                    let values = getValues(object);
                     db.run(insertStatement, values, err => {
                         if (err) {
                             console.error(err);
@@ -96,8 +96,8 @@ function Schema(tableName, properties, db) {
         update: (object, search) => {
             try {
                 return new Promise(resolve => {
-                    var values = getValues(object);
-                    var params = createSqlStatement(updateStatement, search);
+                    let values = getValues(object);
+                    let params = createSqlStatement(updateStatement, search);
                     db.run(params.sql, values.concat(params.values), err => {
                         if (err) {
                             console.error(err);
@@ -112,7 +112,7 @@ function Schema(tableName, properties, db) {
         delete: (search) => {
             try {
                 return new Promise(resolve => {
-                    var params = createSqlStatement(removeStatement, search);
+                    let params = createSqlStatement(removeStatement, search);
                     db.run(params.sql, params.values, err => {
                         if (err) {
                             console.error(err);
@@ -128,17 +128,17 @@ function Schema(tableName, properties, db) {
     return newSchema;
 }
 
-var server;
+let server;
 
-var app = express();
+let app = express();
 app.use(compression());
 app.use(express.json());
 
-var port;
+let port;
 
 if(!headless) {
-    var key = fs.readFileSync("/etc/letsencrypt/live/yanisin.com/privkey.pem", "utf8");
-    var cert = fs.readFileSync("/etc/letsencrypt/live/yanisin.com/fullchain.pem", "utf8");
+    let key = fs.readFileSync("/etc/letsencrypt/live/yanisin.com/privkey.pem", "utf8");
+    let cert = fs.readFileSync("/etc/letsencrypt/live/yanisin.com/fullchain.pem", "utf8");
 
     port = 443;
     server = https.createServer({
@@ -176,7 +176,7 @@ const User = Schema("USERS", [
     "smbPassword"
 ], db);
 
-var inviteCodes = [];
+let inviteCodes = [];
 
 function createId() {
     return Math.random().toString(36).split(".")[1].toUpperCase();
@@ -187,7 +187,7 @@ function checkToken(token) {
         User.findOne({
             token
         }).then(user => {
-            var currentDate = new Date();
+            let currentDate = new Date();
             if (user && currentDate < new Date(user.expirationDate)) {
                 User.update(user, {
                     username: user.username
@@ -200,7 +200,7 @@ function checkToken(token) {
 }
 
 function getExpirationDate() {
-    var date = new Date();
+    let date = new Date();
     date.setDate(date.getDate() + TOKEN_LIFESPAN);
     return date;
 }
@@ -226,12 +226,12 @@ function authenticate(username, password) {
 }
 
 function validatePassword(passwordHash, password) {
-    var decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+    let decodedPassword = Buffer.from(password, "base64").toString("utf-8");
     return passwordHash === applyHash(decodedPassword);
 }
 
 function applyHash(password) {
-    var decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+    let decodedPassword = Buffer.from(password, "base64").toString("utf-8");
     return crypto.createHash("sha256")
         .update(decodedPassword)
         .digest("hex")
@@ -271,11 +271,11 @@ function getUsers() {
 }
 
 function createInviteCode(username = undefined, isAdmin = false) {
-    var existingInviteCode = inviteCodes.find(value => value.username === username);
+    let existingInviteCode = inviteCodes.find(value => value.username === username);
     if (existingInviteCode) {
         return existingInviteCode.id;
     } else {
-        var id = createId();
+        let id = createId();
         inviteCodes.push({
             id,
             isAdmin,
@@ -290,17 +290,16 @@ function getConnectedCertificates(ids) {
     return new Promise(resolve => {
         exec(__dirname + "/scripts/list_connections.sh", (err, stdout) => {
             if (!err) {
-                var result = [];
+                let result = [];
                 ids.forEach(id => {
-                    var values = stdout.split("\n").filter(val => val.indexOf(id) !== -1);
+                    let values = stdout.split("\n").filter(val => val.indexOf(id) !== -1);
                     if (values.length > 0 && values[values.length - 1].indexOf("Peer Connection Initiated") !== -1) {
                         result.push(id);
                     }
                 })
                 resolve(result);
             } else {
-                console.error(err);
-                resolve();
+                resolve([]);
             }
         });
     });
@@ -357,9 +356,9 @@ function isUserConnected(username) {
 
 function createCertificate(username, password) {
     return new Promise(resolve => {
-        var id = createId();
-        var decodedPassword = Buffer.from(password, "base64").toString("utf-8");
-        exec([__dirname + "/scripts/create_certificate.sh", __dirname, id, decodedPassword].join(" "), (err, stdout) => {
+        let id = createId();
+        let decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+        exec([__dirname + "/scripts/create_certificate.sh", __dirname, id, decodedPassword].join(" "), (err) => {
             if (!err) {
                 Certificate.create({
                     id,
@@ -402,7 +401,7 @@ function deleteCertificateById(id) {
 function getCertificate(username, type) {
     return new Promise(resolve => {
         getUnusedCertificates(username).then(certificates => {
-            var id;
+            let id;
             if (certificates.length) {
                 id = certificates[0].id;
             } else {
@@ -448,7 +447,7 @@ function getUnusedCertificates(username) {
             username
         }).then(certificates => {
             getConnectedCertificates(certificates.map(certificate => certificate.id)).then(connectedCertificates => {
-                var ids = connectedCertificates.map(connectedCertificate => connectedCertificate.id);
+                let ids = connectedCertificates.map(connectedCertificate => connectedCertificate.id);
                 resolve(certificates.filter(certificate => ids.indexOf(certificate.id) === -1));
             });
         })
@@ -509,8 +508,8 @@ createEndpoint("get", "users", getUsers);
 
 createCertificateEndpoint("post", "certificates", (req, res) => {
     return new Promise(resolve => {
-        var password = req.body.password;
-        var type = req.body.type === "tap" ? "tap" : "tun";
+        let password = req.body.password;
+        let type = req.body.type === "tap" ? "tap" : "tun";
         if (!validatePassword(req.user.passwordHash, password) || !password) {
             res.status(401);
             resolve();
@@ -533,7 +532,7 @@ createCertificateEndpoint("get", "certificates/download/:id/:type", req => {
 createEndpoint("get", "certificates", () => {
     return new Promise(resolve => {
         Certificate.find().then(certificates => {
-            var certificateIds = certificates.map(certificate => certificate.id);
+            let certificateIds = certificates.map(certificate => certificate.id);
             getConnectedCertificates(certificateIds).then(connectedIds => {
                 resolve(cleanOutput(certificates).map(certificate => ({
                     isConnected: connectedIds.indexOf(certificate.id) !== -1,
@@ -575,8 +574,8 @@ createEndpoint("get", "users/smb", (req, res) => {
 
 createEndpoint("post", "users/login", (req, res) => {
     return new Promise(resolve => {
-        var username = req.body.username;
-        var password = req.body.password;
+        let username = req.body.username;
+        let password = req.body.password;
         authenticate(username, password).then(id => {
             res.status(id ? 200 : 401);
             if (id) {
@@ -591,7 +590,7 @@ createEndpoint("post", "users/login", (req, res) => {
 }, false);
 
 createEndpoint("post", "users/invite", req => {
-    var inviteCode = createInviteCode(req.user.username);
+    let inviteCode = createInviteCode(req.user.username);
     return Promise.resolve({
         inviteCode
     });
@@ -599,10 +598,10 @@ createEndpoint("post", "users/invite", req => {
 
 createEndpoint("post", "users", (req, res) => {
     return new Promise(resolve => {
-        var username = req.body.username;
-        var password = Buffer.from(req.body.password, "base64").toString("utf-8");
-        var inviteCode = inviteCodes.find(value => value.id === req.body.inviteCode);
-        var smbPassword = createId();
+        let username = req.body.username;
+        let password = Buffer.from(req.body.password, "base64").toString("utf-8");
+        let inviteCode = inviteCodes.find(value => value.id === req.body.inviteCode);
+        let smbPassword = createId();
 
         if (USERNAME_REXEX.test(username) && PASSWORD_REGEX.test(password) && inviteCode) {
             createUser(username, password, inviteCode.isAdmin, smbPassword).then(() => {
@@ -618,7 +617,7 @@ createEndpoint("post", "users", (req, res) => {
 
 createEndpoint("put", "users/promote", req => {
     return new Promise(resolve => {
-        var username = req.body.username;
+        let username = req.body.username;
         User.findOne({
             username
         }).then(user => {
@@ -636,7 +635,7 @@ createEndpoint("put", "users/promote", req => {
 
 createEndpoint("delete", "users/:username", req => {
     return new Promise(resolve => {
-        var username = req.params.username;
+        let username = req.params.username;
         User.findOne({
             username
         }).then(user => {
