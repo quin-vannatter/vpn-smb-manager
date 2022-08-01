@@ -15,7 +15,7 @@ scp pi@ca:/usr/share/easy-rsa/pki/ca.crt pi@ca:/usr/share/easy-rsa/pki/private/v
 sudo mv /tmp/ca-config/* /etc/openvpn/
 
 # Install the firewall (ufw) and OpenVPN
-sudo apt-get install npm openvpn ufw sqlite3 samba transmission-cli
+sudo apt-get install npm openvpn ufw sqlite3 samba transmission-cli transmission-common transmission-daemon
 
 # Generate a ta.key
 openvpn --genkey secret ta.key
@@ -44,6 +44,7 @@ npm run build
 # Set up samba server conf
 cd ..
 sudo cp ./smb-config/smb.conf /etc/samba/
+sudo chmod 777 /etc/samba/dfree.sh
 
 echo $PWD
 
@@ -52,3 +53,9 @@ sudo cp ./create-interfaces /etc/init.d/
 sudo chmod +x /etc/init.d/create-interfaces
 sudo update-rc.d create-interfaces defaults
 sudo service create-interfaces start
+
+# Update the transmission
+sudo cp ./transmission/settings.json /etc/transmission-daemon/
+sudo mkdir -p ~/.config/transmission-daemon/
+sudo cp ./transmission/settings.json ~/.config/transmission-daemon/
+sudo service transmission-daemon start

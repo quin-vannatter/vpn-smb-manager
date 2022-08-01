@@ -71,4 +71,7 @@ To                         Action      From
 - Running reset-database.sh will delete and create the database. Use it to refresh data. However any unix/smb/vpn users won't be deleted this way.
 
 ## Downloading Torrents
-- 
+- Find an OVPN file for the VPN being used. Add the following so we can control what traffic is being flowed through
+- `pull-filter ignore redirect-gateway`
+- Add a file called like auth.txt, put the username on the first line and password on the second. Update the client config to reference the file - `auth-user-pass ./auth.txt`
+- Rename it to [client-name].conf and place it in /etc/openvpn
