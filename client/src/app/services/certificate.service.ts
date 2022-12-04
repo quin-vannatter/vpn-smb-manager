@@ -30,7 +30,7 @@ export class CertificateService extends BaseService {
   }
 
   getCertificate(): void {
-    this.getDownloadFile(`download//${this.isMobile() ? "tun" : "tap"}`);
+    this.getDownloadFile(`download/${this.isMobile() ? "tun" : "tap"}`);
   }
 
   getCertificateById(id: string): Observable<void> {
