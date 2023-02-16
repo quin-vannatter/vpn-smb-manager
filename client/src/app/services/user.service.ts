@@ -31,8 +31,8 @@ export class UserService extends BaseService {
     }));
   }
 
-  invite(): Observable<any> {
-    return this.post(undefined, "invite").pipe(map((res: any) => `${location.origin}/login/${res.inviteCode}`))
+  invite(isGuest: boolean): Observable<any> {
+    return this.post(undefined, isGuest ? "guest" : "invite").pipe(map((res: any) => `${location.origin}/login/${res.inviteCode}/${isGuest ? "guest" : "new-user"}`))
   }
 
   logout(): void {

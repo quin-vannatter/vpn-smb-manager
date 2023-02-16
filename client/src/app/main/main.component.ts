@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { zip } from 'rxjs';
+import { AppComponent } from '../app.component';
 import { InviteCodeComponent } from '../invite-code/invite-code.component';
 import { LoadingComponent } from '../loading/loading.component';
 import { User } from '../models/user.interface';
@@ -16,7 +17,7 @@ const PING_INT = 5000;
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.css']
 })
-export class MainComponent {
+export class MainComponent extends AppComponent {
   currentUser?: User;
   userTableData: User[] = [];
   pingInt?: any;
@@ -24,24 +25,14 @@ export class MainComponent {
   isLoggedIn: boolean = false
 
   constructor(private userService: UserService, private certificateService: CertificateService, private dialog: MatDialog) {
+    super();
     userService.isLoggedIn().subscribe(result => {
       this.isLoggedIn = result;
       if (this.isLoggedIn) {
         this.getTableData();
       }
     });
-
     userService.getCurrentUser().subscribe(user => this.currentUser = user);
-  }
-
-  getOpenVpnLink(): string {
-    if (/Android/.test(navigator.userAgent)) {
-      return "https://play.google.com/store/apps/details?id=net.openvpn.openvpn";
-    } else if(/iPhone|iPad/.test(navigator.userAgent)) {
-      return "https://apps.apple.com/us/app/openvpn-connect/id590379981";
-    } else {
-      return "https://swupdate.openvpn.org/community/releases/OpenVPN-2.5.5-I602-amd64.msi";
-    }
   }
 
   getCurrentUser(): void {
@@ -72,8 +63,10 @@ export class MainComponent {
     return item.username;
   }
 
-  generateInviteLink() {
-    this.dialog.open(InviteCodeComponent);
+  generateInviteLink(isGuest: boolean) {
+    this.dialog.open(InviteCodeComponent, {
+      data: { isGuest }
+    });
   }
 
   getServerLink() {
@@ -87,7 +80,7 @@ export class MainComponent {
         data: this.currentUser
       });
     } else {
-      var dialogRef = this.dialog.open(LoadingComponent);
+      const dialogRef = this.dialog.open(LoadingComponent);
       this.userService.getSmb().subscribe(() => dialogRef.close());
     }
   }

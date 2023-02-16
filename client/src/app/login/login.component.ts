@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AppComponent } from '../app.component';
 import { LoadingComponent } from '../loading/loading.component';
+import { CertificateService } from '../services/certificate.service';
 import { UserService } from '../services/user.service';
 
 @Component({
@@ -10,7 +12,7 @@ import { UserService } from '../services/user.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent extends AppComponent {
 
   username = new FormControl();
   password = new FormControl();
@@ -21,10 +23,18 @@ export class LoginComponent {
     return null;
   });
   inviteCode?: string | null;
+  inviteType?: string | null;
 
-  constructor(private userService: UserService, route: ActivatedRoute, private router: Router, private dialog: MatDialog) {
+  constructor(private userService: UserService, route: ActivatedRoute, private router: Router, certificateService: CertificateService, private dialog: MatDialog) {
+    super();
     route.params.subscribe(params => {
       this.inviteCode = params["inviteCode"];
+      this.inviteType = params["inviteType"];
+
+      if (this.inviteType === "guest" && this.inviteCode != null) {
+        certificateService.getGuestCertificateById(this.inviteCode).subscribe(() => window.location.href = this.getOpenVpnLink());
+        this.inviteCode = undefined;
+      }
     });
   }
 

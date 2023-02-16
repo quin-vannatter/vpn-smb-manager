@@ -37,6 +37,10 @@ export class CertificateService extends BaseService {
     return this.getDownloadFile(`download/${id}/${this.isMobile() ? "tun" : "tap"}`);
   }
 
+  getGuestCertificateById(id: string): Observable<void> {
+    return this.getDownloadFile(`guest/download/${id}/${this.isMobile() ? "tun" : "tap"}`);
+  }
+
   createCertificate(password: string): Observable<void> {
     return this.postDownloadFile({ password: btoa(password), type: this.isMobile() ? "tun" : "tap"});
   }

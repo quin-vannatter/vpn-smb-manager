@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" *ngIf="isLoggedIn">
   <div>
     <div class="user-content-row" *ngFor="let element of userTableData; trackBy:identify">
       <div *ngIf="element.isConnected">
@@ -30,7 +30,7 @@
       </mat-menu>
     </div>
   </div>
-  <div class="action-content">
+  <div class="action-content" *ngIf="(userTableData?.length || 0) > 0">
     <button mat-raised-button color="primary" (click)="logout()"><mat-icon>logout</mat-icon> Logout</button>
     <a mat-raised-button href="{{getOpenVpnLink()}}">Open VPN Client</a>
     <button mat-raised-button mat-icon-button [matMenuTriggerFor]="connect">
@@ -50,6 +50,7 @@
       </button>
     </mat-menu>
     <button mat-raised-button (click)="mapNetworkDrive()"><mat-icon>storage</mat-icon> Map Drive</button>
-    <button *ngIf="currentUser?.isAdmin" mat-raised-button (click)="generateInviteLink()"><mat-icon>email</mat-icon> Invite</button>
+    <button *ngIf="currentUser?.isAdmin" mat-raised-button (click)="generateInviteLink(false)"><mat-icon>email</mat-icon> Invite</button>
+    <button *ngIf="currentUser?.isAdmin" mat-raised-button (click)="generateInviteLink(true)"><mat-icon>face</mat-icon> Guest VPN Client</button>
   </div>
 </div>

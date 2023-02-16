@@ -49,7 +49,6 @@ import { ServerInfoComponent } from './server-info/server-info.component';
     MatDialogModule,
     MatIconModule,
     MatProgressSpinnerModule
-
   ],
   providers: [ UserService, CertificateService ],
   bootstrap: [AppComponent]
