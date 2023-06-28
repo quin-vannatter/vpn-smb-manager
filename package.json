@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "simple-sqlite3-wrapper": "^1.0.1"
+  }
+}

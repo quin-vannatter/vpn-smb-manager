@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { zip } from 'rxjs';
+import { first, zip } from 'rxjs';
 import { AppComponent } from '../app.component';
 import { InviteCodeComponent } from '../invite-code/invite-code.component';
 import { LoadingComponent } from '../loading/loading.component';
@@ -20,31 +20,31 @@ const PING_INT = 5000;
 export class MainComponent extends AppComponent {
   currentUser?: User;
   userTableData: User[] = [];
-  pingInt?: any;
 
   isLoggedIn: boolean = false
+  timeout?: NodeJS.Timeout;
 
   constructor(private userService: UserService, private certificateService: CertificateService, private dialog: MatDialog) {
     super();
-    userService.isLoggedIn().subscribe(result => {
+    userService.isLoggedIn().pipe(first()).subscribe(result => {
       this.isLoggedIn = result;
       if (this.isLoggedIn) {
         this.getTableData();
       }
     });
-    userService.getCurrentUser().subscribe(user => this.currentUser = user);
+    userService.getCurrentUser().pipe(first(user => user != undefined)).subscribe(user => this.currentUser = user);
   }
 
   getCurrentUser(): void {
-    this.userService.getCurrentUser().subscribe(user => {
+    this.userService.getCurrentUser().pipe(first(user => user != undefined)).subscribe(user => {
       this.currentUser = user;
       this.getTableData();
     });
   }
 
   getTableData(): void {
-    this.userService.getUsers().subscribe(users => {
-      this.certificateService.getCertificates().subscribe(certificates => {
+    this.userService.getUsers().pipe(first()).subscribe(users => {
+      this.certificateService.getCertificates().pipe(first()).subscribe(certificates => {
         if (certificates) {
           users.forEach(user => {
             user.certificates = certificates.filter(certificate => certificate.username === user.username);
@@ -54,8 +54,11 @@ export class MainComponent extends AppComponent {
           });
         }
         this.userTableData = users;
-        setTimeout(() => this.getTableData(), PING_INT);
-      })
+        if (this.timeout != undefined) {
+          clearTimeout(this.timeout);
+        }
+        this.timeout = setTimeout(() => this.getTableData(), PING_INT);
+      });
     });
   }
 
@@ -81,14 +84,14 @@ export class MainComponent extends AppComponent {
       });
     } else {
       const dialogRef = this.dialog.open(LoadingComponent);
-      this.userService.getSmb().subscribe(() => dialogRef.close());
+      this.userService.getSmb().pipe(first()).subscribe(() => dialogRef.close());
     }
   }
 
   clearCertificates(user: User | undefined) {
     if (user) {
       var dialogRef = this.dialog.open(LoadingComponent);
-      zip(user.certificates.map(certificate => this.certificateService.deleteCertificate(certificate.id))).subscribe(() => {
+      zip(user.certificates.map(certificate => this.certificateService.deleteCertificate(certificate.id))).pipe(first()).subscribe(() => {
         this.getTableData();
         dialogRef.close();
       });
@@ -96,10 +99,10 @@ export class MainComponent extends AppComponent {
   }
 
   createCertificate() {
-    this.dialog.open(PasswordPromptComponent).afterClosed().subscribe(password => {
+    this.dialog.open(PasswordPromptComponent).afterClosed().pipe(first()).subscribe(password => {
       if (password && this.currentUser?.username) {
         var dialogRef = this.dialog.open(LoadingComponent);
-        this.certificateService.createCertificate(password).subscribe(() => {
+        this.certificateService.createCertificate(password).pipe(first()).subscribe(() => {
           this.getTableData();
           dialogRef.close();
         });
@@ -114,7 +117,7 @@ export class MainComponent extends AppComponent {
   deleteUser(user: User) {
     if (this.currentUser?.username === user.username || this.currentUser?.isAdmin) {
       var dialogRef = this.dialog.open(LoadingComponent);
-      this.userService.deleteUser(user.username).subscribe(() => {
+      this.userService.deleteUser(user.username).pipe(first()).subscribe(() => {
         this.getTableData();
         dialogRef.close();
       });
@@ -123,7 +126,7 @@ export class MainComponent extends AppComponent {
 
   promoteUser(user: User) {
     if (!user.isAdmin && this.currentUser?.isAdmin) {
-      this.userService.promoteUser(user.username).subscribe(() => this.getTableData());
+      this.userService.promoteUser(user.username).pipe(first()).subscribe(() => this.getTableData());
     }
   }
 

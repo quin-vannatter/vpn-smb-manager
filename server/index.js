@@ -8,6 +8,7 @@ let {
     exec
 } = require("child_process");
 let sqlite3 = require("sqlite3").verbose();
+let createWrapper = require("simple-sqlite3-wrapper").createWrapper;
 
 const headless = process.argv[2] === "headless";
 
@@ -16,117 +17,6 @@ let db = new sqlite3.Database("./vpn-smb-manager.db", sqlite3.OPEN_READWRITE, er
         console.error(err);
     }
 });
-
-function Schema(tableName, properties, db) {
-    let propMap = properties.map(key => ({
-        jsonKey: key,
-        sqlKey: key.match(/(^[a-z]+|[A-Z][a-z]*)/g).map(value => value.toUpperCase()).join("_")
-    }));
-    let insertStatement = `INSERT INTO ${tableName} (${propMap.map(property => property.sqlKey).join(", ")}) VALUES (${new Array(propMap.length).fill("?").join(", ")});`;
-    let updateStatement = `UPDATE ${tableName} SET ${propMap.map(property => `${property.sqlKey} = ? `).join(", ")}`;
-    let removeStatement = `DELETE FROM ${tableName}`;
-    let selectStatement = `SELECT ${propMap.map(property => `${property.sqlKey} ${property.jsonKey}`).join(", ")} FROM ${tableName}`;
-    let formatValue = (value) => {
-        if (typeof (value) === "boolean") {
-            return value ? 1 : 0;
-        }
-        return value && value.toString() || null;
-    }
-    let createSqlStatement = (sql, object) => {
-        let values = [];
-        if (!object) {
-            return {
-                sql: `${sql}`,
-                values
-            }
-        }
-        return {
-            sql: `${sql} WHERE ${Object.keys(object).filter(key => propMap.some(property => property.jsonKey === key)).map(key => {
-                let property = propMap.find(property => property.jsonKey ===  key);
-                values.push(formatValue(object[key]));
-                return `${property.sqlKey} = ?`;
-            }).join(" AND ")};`,
-            values
-        };
-    }
-    let getValues = object => propMap.map(property => formatValue(object[property.jsonKey]));
-    let newSchema = {
-        findOne: (search) => {
-            try
-            {
-                return new Promise(resolve => {
-                    newSchema.find(search).then(rows => resolve(rows.length ? rows[0] : null));
-                });
-            }
-            catch {
-                return Promise.resolve(null)
-            }
-        },
-        find: (search) => {
-            try {
-                return new Promise(resolve => {
-                    let params = createSqlStatement(selectStatement, search);
-                    db.all(params.sql, params.values, (err, rows) => {
-                        if (err) {
-                            console.error(err);
-                        }
-                        resolve(rows);
-                    });
-                });
-            }
-            catch {
-                return Promise.resolve([]);
-            }
-        },
-        create: (object) => {
-            try {
-                return new Promise(resolve => {
-                    let values = getValues(object);
-                    db.run(insertStatement, values, err => {
-                        if (err) {
-                            console.error(err);
-                        }
-                        resolve();
-                    });
-                });
-            } catch {
-                return Promise.resolve();
-            }
-        },
-        update: (object, search) => {
-            try {
-                return new Promise(resolve => {
-                    let values = getValues(object);
-                    let params = createSqlStatement(updateStatement, search);
-                    db.run(params.sql, values.concat(params.values), err => {
-                        if (err) {
-                            console.error(err);
-                        }
-                        resolve();
-                    })
-                });
-            } catch {
-                return Promise.resolve();
-            }
-        },
-        delete: (search) => {
-            try {
-                return new Promise(resolve => {
-                    let params = createSqlStatement(removeStatement, search);
-                    db.run(params.sql, params.values, err => {
-                        if (err) {
-                            console.error(err);
-                        }
-                        resolve();
-                    });
-                });
-            } catch {
-                return Promise.resolve();
-            }
-        }
-    }
-    return newSchema;
-}
 
 let server;
 
@@ -151,8 +41,9 @@ if(!headless) {
 }
 
 const GATEWAY_TIMEOUT = 1000 * 60 * 20;
+const GUEST_GRACE_PERIOD = 1000 * 60 * 10;
 const TOKEN_LIFESPAN = 3;
-const INVITE_TIMEOUT = 1000 * 60;
+const INVITE_TIMEOUT = 1000 * 60 * 5;
 const USERNAME_REXEX = /^[a-z_]{3,25}$/;
 const PASSWORD_REGEX = /^.{4,50}$/;
 const REMOVE_PROPERTIES = [
@@ -162,12 +53,12 @@ const REMOVE_PROPERTIES = [
     "token"
 ];
 
-const Certificate = Schema("CERTIFICATES", [
+const Certificate = createWrapper("CERTIFICATES", [
     "id",
     "username"
 ], db);
 
-const User = Schema("USERS", [
+const User = createWrapper("USERS", [
     "username",
     "passwordHash",
     "isAdmin",
@@ -177,6 +68,8 @@ const User = Schema("USERS", [
 ], db);
 
 let inviteCodes = [];
+let guestInviteCodes = [];
+let guestIds = [];
 
 function createId() {
     return Math.random().toString(36).split(".")[1].toUpperCase();
@@ -286,6 +179,29 @@ function createInviteCode(username = undefined, isAdmin = false) {
     }
 }
 
+function createGuestCode(username = undefined) {
+    return new Promise(resolve => {
+        let existingInviteCode = guestInviteCodes.find(value => value.username === username);
+        if (existingInviteCode) {
+            return resolve(existingInviteCode.id);
+        } else {
+            let id = createId();
+            createCertificate(undefined).then(certificateId => {
+                guestInviteCodes.push({
+                    id,
+                    isAdmin: false,
+                    username,
+                    certificateId
+                });
+                setTimeout(() => guestInviteCodes = guestInviteCodes.filter(value => value.id !== id), INVITE_TIMEOUT);
+                setTimeout(() => guestIds.splice(guestIds.indexOf(certificateId), 1), GUEST_GRACE_PERIOD);
+                guestIds.push(certificateId);
+                resolve(id);
+            });
+        }
+    });
+}
+
 function getConnectedCertificates(ids) {
     return new Promise(resolve => {
         exec(__dirname + "/scripts/list_connections.sh", (err, stdout) => {
@@ -354,11 +270,27 @@ function isUserConnected(username) {
     });
 }
 
+function clearGuestCertificates() {
+    return new Promise(resolve => {
+        Certificate.find({
+            username: undefined
+        }).then(certificates => {
+            getConnectedCertificates(certificates.map(certificate => certificate.id)).then(results =>
+                Promise.all(certificates.filter(certificate => 
+                    !results.includes(certificate.id) && !guestIds.includes(certificate.id)).map(certificate => deleteCertificateById(certificate.id))).then(() => resolve()));
+        })
+    });
+}
+
 function createCertificate(username, password) {
     return new Promise(resolve => {
         let id = createId();
-        let decodedPassword = Buffer.from(password, "base64").toString("utf-8");
-        exec([__dirname + "/scripts/create_certificate.sh", __dirname, id, decodedPassword].join(" "), (err) => {
+        let params = [__dirname + "/scripts/create_certificate.sh", __dirname, id];
+        if (password != undefined) {
+            params.push(Buffer.from(password, "base64").toString("utf-8"));
+        }
+
+        exec(params.join(" "), (err) => {
             if (!err) {
                 Certificate.create({
                     id,
@@ -412,6 +344,15 @@ function getCertificate(username, type) {
     });
 }
 
+function getGuestCertificate(id, type) {
+    return new Promise(resolve => {
+        let certificateId = guestInviteCodes.find(item => item.id === id)?.certificateId;
+        if (certificateId != null) {
+            executeGetCertificate(certificateId, type, resolve);
+        }
+    })
+}
+
 function handleOutput(err, stdout, callback) {
     if (!err) {
         callback(stdout);
@@ -459,13 +400,13 @@ function cleanOutput(value) {
     return value;
 }
 
-function createCertificateEndpoint(action, path, fn) {
+function createCertificateEndpoint(action, path, fn, isAuthenticated = true) {
     createEndpoint(action, path, (req, res) => {
         res.setHeader("Content-Type", "application/x-openvpn-profile");
-        res.setHeader("Content-Disposition", `attachment; filename=${req.user.username}.ovpn`);
+        res.setHeader("Content-Disposition", `attachment; filename=${req?.user?.username || 'yanisin-guest'}.ovpn`);
         res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         return fn(req, res);
-    }, true, false, false);
+    }, isAuthenticated, false, false);
 }
 
 function createEndpoint(action, path, fn, isAuthenticated = true, isAdmin = false, isJson = true) {
@@ -504,7 +445,10 @@ function createEndpoint(action, path, fn, isAuthenticated = true, isAdmin = fals
     });
 }
 
-createEndpoint("get", "users", getUsers);
+createEndpoint("get", "users", () => {
+    clearGuestCertificates();
+    return getUsers();
+});
 
 createCertificateEndpoint("post", "certificates", (req, res) => {
     return new Promise(resolve => {
@@ -526,8 +470,12 @@ createCertificateEndpoint("get", "certificates/download/:type", req => {
 });
 
 createCertificateEndpoint("get", "certificates/download/:id/:type", req => {
-    return getCertificateById(req.user.username, req.params.type === "tap" ? "tap" : "tun", req.params.id);
+    return getCertificateById(req?.user?.username, req.params.type === "tap" ? "tap" : "tun", req.params.id);
 });
+
+createCertificateEndpoint("get", "certificates/guest/download/:id/:type", req => {
+    return getGuestCertificate(req.params.id, req.params.type === "tap" ? "tap" : "tun");
+}, false);
 
 createEndpoint("get", "certificates", () => {
     return new Promise(resolve => {
@@ -594,6 +542,10 @@ createEndpoint("post", "users/invite", req => {
     return Promise.resolve({
         inviteCode
     });
+}, true, true);
+
+createEndpoint("post", "users/guest", req => {
+    return createGuestCode(req.user.username).then(id => ({ inviteCode: id }));
 }, true, true);
 
 createEndpoint("post", "users", (req, res) => {
