@@ -29,6 +29,9 @@ export class MainComponent extends AppComponent {
     userService.isLoggedIn().pipe(first()).subscribe(result => {
       this.isLoggedIn = result;
       if (this.isLoggedIn) {
+        userService.getScripts().subscribe(result => {
+          console.log(result);
+        });
         this.getTableData();
       }
     });

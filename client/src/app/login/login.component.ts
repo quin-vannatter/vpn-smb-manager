@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { AbstractControl, FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -27,6 +27,9 @@ export class LoginComponent extends AppComponent {
 
   constructor(private userService: UserService, route: ActivatedRoute, private router: Router, certificateService: CertificateService, private dialog: MatDialog) {
     super();
+    window.addEventListener("onkeyup", () => {
+
+    })
     route.params.subscribe(params => {
       this.inviteCode = params["inviteCode"];
       this.inviteType = params["inviteType"];
@@ -42,8 +45,9 @@ export class LoginComponent extends AppComponent {
     return this.password.valid && this.username.valid && (!this.inviteCode || this.passwordConfirm.valid);
   }
 
-  login(): void {
-    if (this.username.valid && this.password.valid) {
+  @HostListener("document:keypress", ["$event"])
+  login(event?: KeyboardEvent): void {
+    if (this.isFormValid() && (event === undefined || event.key === "Enter")) {
       var dialog = this.dialog.open(LoadingComponent);
       var userArgs: [string, string] = [this.username.value, this.password.value];
       if (!this.inviteCode) {

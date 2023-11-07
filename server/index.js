@@ -12,6 +12,9 @@ let createWrapper = require("simple-sqlite3-wrapper").createWrapper;
 
 const headless = process.argv[2] === "headless";
 
+const userScriptsLocation = (user, drive) => `/share/${drive}/${user}/private/scripts`;
+const userScripts = {};
+
 let db = new sqlite3.Database("./vpn-smb-manager.db", sqlite3.OPEN_READWRITE, err => {
     if (err) {
         console.error(err);
@@ -177,6 +180,63 @@ function createInviteCode(username = undefined, isAdmin = false) {
         setTimeout(() => inviteCodes = inviteCodes.filter(value => value.id !== id), INVITE_TIMEOUT);
         return id;
     }
+}
+
+function evaluateUserScripts() {
+    return new Promise(resolve => Promise.all([getUsers(), getCurrentDrives()]).then(values => {
+        var locations = values[0].flatMap(user => values[1].map(drive => ({ username: user.username, fileLocation: userScriptsLocation(user.username, drive) })));
+        Promise.all(locations.map(location => new Promise(resolve => {
+            exec([__dirname + "/scripts/list_scripts.sh", location.fileLocation].join(" "), (err, stdout) => {
+                if (!err) {
+                    resolve({
+                        fileLocations: stdout.split("\n").filter(x => x),
+                        username: location.username
+                    });
+                } else {
+                    console.error(err);
+                    resolve([]);
+                }
+            });
+        }))).then(results => {
+            results.forEach(result => result.fileLocations.forEach(script => {
+                let scriptContent = fs.readFileSync(script).toString();
+                if (/^return/.test(scriptContent)) {
+                    scriptContent = scriptContent.replace(/^return/, `userScripts["${script}"] =`);
+                    try {
+                        eval(scriptContent);
+                        userScripts[script].users.push(result.username);
+                        userScripts[script].owner = result.username;
+                        userScripts[script].name = `${script.split("/").pop()}`;
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                }
+            }));
+            resolve();
+        });
+    }));
+}
+
+function getUserScripts(username) {
+    return new Promise(resolve => evaluateUserScripts().then(() => resolve(Object.entries(userScripts)
+        .filter(entry => entry[1].users.includes(username)).map(entry => ({
+        name: entry[1].name,
+        owner: entry[1].owner,
+        actions: entry[1].actions.map(({ name, signature }) => ({ name, signature })),
+        display: entry[1].display.map(x => x.name)
+    })))));
+}
+
+function getCurrentDrives() {
+    return new Promise(resolve => {
+        exec(__dirname + "/scripts/list_drives.sh", (err, stdout) => {
+            if (!err) {
+                resolve(stdout.split("\n").filter(x => x));
+            } else {
+                resolve([]);
+            }
+        });
+    });
 }
 
 function createGuestCode(username = undefined) {
@@ -513,6 +573,10 @@ createEndpoint("get", "users/current", req => {
     return Promise.resolve(cleanOutput(req.user));
 });
 
+createEndpoint("get", "users/scripts", req => {
+    return Promise.resolve(getUserScripts(req.user.username));
+})
+
 createEndpoint("get", "users/smb", (req, res) => {
     res.setHeader("Content-Type", "	application/bat");
     res.setHeader("Content-Disposition", `attachment; filename=${req.user.username}-drive.bat`);
@@ -521,6 +585,7 @@ createEndpoint("get", "users/smb", (req, res) => {
 }, true, false, false);
 
 createEndpoint("post", "users/login", (req, res) => {
+    evaluateUserScripts();
     return new Promise(resolve => {
         let username = req.body.username;
         let password = req.body.password;
