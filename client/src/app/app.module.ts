@@ -5,6 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTable, MatTableModule } from '@angular/material/table';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
@@ -23,6 +24,7 @@ import { CertificateService } from './services/certificate.service';
 import { PasswordPromptComponent } from './password-prompt/password-prompt.component';
 import { LoadingComponent } from './loading/loading.component';
 import { ServerInfoComponent } from './server-info/server-info.component';
+import { UserScriptsComponent } from './user-scripts/user-scripts.component';
 
 @NgModule({
   declarations: [
@@ -32,7 +34,8 @@ import { ServerInfoComponent } from './server-info/server-info.component';
     MainComponent,
     PasswordPromptComponent,
     LoadingComponent,
-    ServerInfoComponent
+    ServerInfoComponent,
+    UserScriptsComponent
   ],
   imports: [
     BrowserModule,
@@ -42,6 +45,7 @@ import { ServerInfoComponent } from './server-info/server-info.component';
     FormsModule,
     ReactiveFormsModule,
 
+    MatTableModule,
     MatMenuModule,
     MatCardModule,
     MatInputModule,

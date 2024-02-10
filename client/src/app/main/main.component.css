@@ -39,7 +39,7 @@
 
 .action-content > button,a {
     flex: 1;
-    flex-basis: 15%;
+    flex-basis: 5%;
     min-width: fit-content;
     border-radius: 3px;
 }

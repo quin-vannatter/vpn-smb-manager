@@ -50,7 +50,8 @@
       </button>
     </mat-menu>
     <button mat-raised-button (click)="mapNetworkDrive()"><mat-icon>storage</mat-icon> Map Drive</button>
-    <button *ngIf="currentUser?.isAdmin" mat-raised-button (click)="generateInviteLink(false)"><mat-icon>email</mat-icon> Invite</button>
-    <button *ngIf="currentUser?.isAdmin" mat-raised-button (click)="generateInviteLink(true)"><mat-icon>face</mat-icon> Guest VPN Client</button>
+    <button *ngIf="currentUser?.isAdmin" mat-raised-button (click)="generateInviteLink(false)"><mat-icon>account_circle</mat-icon> Invite User</button>
+    <button mat-raised-button (click)="generateInviteLink(true)" color="accent"><mat-icon>email</mat-icon> Create VPN Invite ( {{guestCount}} )</button>
+    <button *ngIf="userScripts.length > 0" mat-raised-button color="accent" routerLink="/user-scripts"><mat-icon>code</mat-icon> User Scripts</button>
   </div>
 </div>

@@ -1,0 +1,17 @@
+<div class="container" *ngIf="isLoggedIn">
+  <div class="content">
+    <div class="display-content">
+      <table mat-table [dataSource]="getDataSource()">
+        <ng-container *ngFor="let header of getDataHeaders() | async; index as i" matColumnDef="{{header}}">
+          <mat-header-cell *matHeaderCellDef>{{header}}</mat-header-cell>
+          <mat-cell *matCellDef="let item">{{item[i]}}</mat-cell>
+        </ng-container>
+        <mat-header-row class="table-row" *matHeaderRowDef="getDataHeaders() | async"></mat-header-row>
+        <mat-row *matRowDef="let row; columns: getDataHeaders() | async"></mat-row>
+      </table>
+    </div>
+    <div class="action-content">
+
+    </div>
+  </div>
+</div>

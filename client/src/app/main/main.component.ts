@@ -20,19 +20,19 @@ const PING_INT = 5000;
 export class MainComponent extends AppComponent {
   currentUser?: User;
   userTableData: User[] = [];
+  guestCount: number = 0;
 
-  isLoggedIn: boolean = false
+  isLoggedIn: boolean = false;
   timeout?: NodeJS.Timeout;
+  userScripts: any[] = [];
 
   constructor(private userService: UserService, private certificateService: CertificateService, private dialog: MatDialog) {
     super();
     userService.isLoggedIn().pipe(first()).subscribe(result => {
       this.isLoggedIn = result;
       if (this.isLoggedIn) {
-        userService.getScripts().subscribe(result => {
-          console.log(result);
-        });
         this.getTableData();
+        userService.getUserScripts().pipe(first()).subscribe(userScripts => this.userScripts = userScripts);
       }
     });
     userService.getCurrentUser().pipe(first(user => user != undefined)).subscribe(user => this.currentUser = user);
@@ -46,7 +46,9 @@ export class MainComponent extends AppComponent {
   }
 
   getTableData(): void {
-    this.userService.getUsers().pipe(first()).subscribe(users => {
+    this.userService.getUsers().pipe(first()).subscribe(result => {
+      var users = result.resolvedUsers;
+      this.guestCount = result.guestCount;
       this.certificateService.getCertificates().pipe(first()).subscribe(certificates => {
         if (certificates) {
           users.forEach(user => {

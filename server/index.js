@@ -45,6 +45,7 @@ if(!headless) {
 
 const GATEWAY_TIMEOUT = 1000 * 60 * 20;
 const GUEST_GRACE_PERIOD = 1000 * 60 * 10;
+const GUEST_CHECK_INT = 1000 * 60 * 3;
 const TOKEN_LIFESPAN = 3;
 const INVITE_TIMEOUT = 1000 * 60 * 5;
 const USERNAME_REXEX = /^[a-z_]{3,25}$/;
@@ -161,7 +162,14 @@ function getUsers() {
                         ...user
                     }));
                 });
-            })).then(resolvedUsers => resolve(cleanOutput(resolvedUsers)));
+            })).then(resolvedUsers => {
+                checkConnectedGuestCertificates().then(guestCount => {
+                    resolve({
+                        guestCount,
+                        resolvedUsers: cleanOutput(resolvedUsers)
+                    });
+                });
+            });
         })
     });
 }
@@ -184,7 +192,7 @@ function createInviteCode(username = undefined, isAdmin = false) {
 
 function evaluateUserScripts() {
     return new Promise(resolve => Promise.all([getUsers(), getCurrentDrives()]).then(values => {
-        var locations = values[0].flatMap(user => values[1].map(drive => ({ username: user.username, fileLocation: userScriptsLocation(user.username, drive) })));
+        var locations = values[0].resolvedUsers.flatMap(user => values[1].map(drive => ({ username: user.username, fileLocation: userScriptsLocation(user.username, drive) })));
         Promise.all(locations.map(location => new Promise(resolve => {
             exec([__dirname + "/scripts/list_scripts.sh", location.fileLocation].join(" "), (err, stdout) => {
                 if (!err) {
@@ -201,12 +209,18 @@ function evaluateUserScripts() {
             results.forEach(result => result.fileLocations.forEach(script => {
                 let scriptContent = fs.readFileSync(script).toString();
                 if (/^return/.test(scriptContent)) {
-                    scriptContent = scriptContent.replace(/^return/, `userScripts["${script}"] =`);
+                    const id = createId();
+                    scriptContent = scriptContent.replace(/^return/, `userScripts["${id}"] =`);
                     try {
                         eval(scriptContent);
-                        userScripts[script].users.push(result.username);
-                        userScripts[script].owner = result.username;
-                        userScripts[script].name = `${script.split("/").pop()}`;
+                        userScripts[id].users.push(result.username);
+                        userScripts[id] = {
+                            ...userScripts[id],
+                            owner: result.username,
+                            name: `${script.split("/").pop()}`,
+                            script,
+                            id
+                        }
                     } catch (ex) {
                         console.error(ex);
                     }
@@ -217,13 +231,31 @@ function evaluateUserScripts() {
     }));
 }
 
+function saveUserScriptData(script, data) {
+    const path = `${script}.json`;
+    fs.writeFileSync(path, JSON.stringify(data));
+}
+
+function loadUserScriptData(script) {
+    let data;
+    const path = `${script}.json`;
+    try {
+        data = JSON.parse(fs.readFileSync(path));
+    } catch {
+        data = {};
+        saveUserScriptData(script, data);
+    }
+    return data;
+}
+
 function getUserScripts(username) {
     return new Promise(resolve => evaluateUserScripts().then(() => resolve(Object.entries(userScripts)
         .filter(entry => entry[1].users.includes(username)).map(entry => ({
         name: entry[1].name,
+        id: entry[1].id,
         owner: entry[1].owner,
         actions: entry[1].actions.map(({ name, signature }) => ({ name, signature })),
-        display: entry[1].display.map(x => x.name)
+        display: entry[1].display.length
     })))));
 }
 
@@ -330,15 +362,16 @@ function isUserConnected(username) {
     });
 }
 
-function clearGuestCertificates() {
+function checkConnectedGuestCertificates() {
     return new Promise(resolve => {
         Certificate.find({
             username: undefined
         }).then(certificates => {
-            getConnectedCertificates(certificates.map(certificate => certificate.id)).then(results =>
-                Promise.all(certificates.filter(certificate => 
-                    !results.includes(certificate.id) && !guestIds.includes(certificate.id)).map(certificate => deleteCertificateById(certificate.id))).then(() => resolve()));
-        })
+            getConnectedCertificates(certificates.map(certificate => certificate.id)).then(results => {
+                const expiredGuestCertificates = certificates.filter(certificate => !results.includes(certificate.id) && !guestIds.includes(certificate.id));
+                Promise.all(expiredGuestCertificates.map(certificate => deleteCertificateById(certificate.id))).then(() => resolve(certificates.length - expiredGuestCertificates.length));
+            });
+        });
     });
 }
 
@@ -505,10 +538,7 @@ function createEndpoint(action, path, fn, isAuthenticated = true, isAdmin = fals
     });
 }
 
-createEndpoint("get", "users", () => {
-    clearGuestCertificates();
-    return getUsers();
-});
+createEndpoint("get", "users", () => getUsers());
 
 createCertificateEndpoint("post", "certificates", (req, res) => {
     return new Promise(resolve => {
@@ -575,7 +605,29 @@ createEndpoint("get", "users/current", req => {
 
 createEndpoint("get", "users/scripts", req => {
     return Promise.resolve(getUserScripts(req.user.username));
-})
+});
+
+createEndpoint("get", "users/init", () => {
+    return new Promise(resolve => User.find().then(users => {
+        if (!users.some(user => user.isAdmin)) {
+            var inviteCode = createInviteCode(undefined, true);
+            resolve({ inviteCode });
+        } else {
+            resolve({});
+        }
+    }));
+}, false);
+
+createEndpoint("get", "users/scripts/display/:id/:index", req => {
+    return new Promise(resolve => {
+        const script = userScripts[req.params.id];
+        const index = parseInt(req.params.index);
+        if (script != undefined && script.users.includes(req.user.username) && !isNaN(index) && index < script.display.length) {
+            const data = loadUserScriptData(script.script);
+            resolve(script.display[index](data));
+        }
+    });
+});
 
 createEndpoint("get", "users/smb", (req, res) => {
     res.setHeader("Content-Type", "	application/bat");
@@ -611,7 +663,7 @@ createEndpoint("post", "users/invite", req => {
 
 createEndpoint("post", "users/guest", req => {
     return createGuestCode(req.user.username).then(id => ({ inviteCode: id }));
-}, true, true);
+}, true);
 
 createEndpoint("post", "users", (req, res) => {
     return new Promise(resolve => {
@@ -677,12 +729,8 @@ if (!headless) {
         res.status(200).sendFile("/", { root: "./ui" });
     });
 }
-User.find().then(users => {
-    if (!users.some(user => user.isAdmin)) {
-        console.log("No users registered. Start the client, go to the login page and add the following to the address bar:")
-        console.log("/" + createInviteCode(undefined, true));
-    }
-});
+
+setInterval(() => checkConnectedGuestCertificates(), GUEST_CHECK_INT);
 
 server.setTimeout(GATEWAY_TIMEOUT);
 server.listen(port);

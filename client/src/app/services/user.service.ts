@@ -35,8 +35,12 @@ export class UserService extends BaseService {
     return this.post(undefined, isGuest ? "guest" : "invite").pipe(map((res: any) => `${location.origin}/login/${res.inviteCode}/${isGuest ? "guest" : "new-user"}`))
   }
 
-  getScripts(): Observable<string[]> {
+  getUserScripts(): Observable<any[]> {
     return this.get("scripts");
+  }
+
+  getDisplay(script: string, index: number): Observable<string[][]> {
+    return this.get(`scripts/display/${script}/${index}`);
   }
 
   logout(): void {
@@ -61,8 +65,8 @@ export class UserService extends BaseService {
     return this.getDownloadFile("smb");
   }
 
-  getUsers(): Observable<User[]> {
-    return this.get<User[]>();
+  getUsers(): Observable<{ resolvedUsers: User[], guestCount: number }> {
+    return this.get<{ resolvedUsers: User[], guestCount: number }>();
   }
 
   createUser(inviteCode: string, username: string, password: string): Observable<any> {

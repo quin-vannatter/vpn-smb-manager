@@ -1,0 +1,18 @@
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    margin: 5px;
+    background-color: #fff;
+    border-bottom: 1px solid #BBB;
+}
+
+table {
+    width: 100%
+}
+
+.mat-header-cell {
+    background-color: #EEE;
+}
