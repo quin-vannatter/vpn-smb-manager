@@ -4,7 +4,7 @@
 - 2 Ubuntu servers on the same network
   - VPN Server
   - CA Server
-  - Ensure the main user on each is `pi`
+  - Ensure the main user on each is `pi`. I built this on raspberry pis which is why but you can probably change the user if you look at the server create script and the various scripts under server/scripts and make the updates there. Maybe at some point I'll make this configurable.
 
 ## Server Network Setup
 - Ensure both servers have static IP addresses
