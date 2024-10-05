@@ -38,29 +38,28 @@ COMMIT
 ```
 To                         Action      From
 --                         ------      ----
-192.168.0.105 445/tcp      ALLOW       192.168.0.0/24
-192.168.0.105 22/tcp       ALLOW       192.168.0.240
-192.168.0.105 80/tcp       ALLOW       Anywhere
-192.168.0.105 443/tcp      ALLOW       Anywhere
-192.168.0.105 8080/tcp     ALLOW       192.168.0.0/24
-192.168.0.105 8081/tcp     ALLOW       192.168.0.0/24
-192.168.0.105 1194/udp     ALLOW       Anywhere
-192.168.0.105 22/tcp       ALLOW       192.168.0.241
 10.8.0.0/24 1:65535/tcp    ALLOW       10.8.0.0/24
 10.8.0.0/24 1:65535/udp    ALLOW       10.8.0.0/24
-192.168.0.105 1195/udp     ALLOW       Anywhere
 10.7.0.0/24 1:65535/tcp    ALLOW       10.7.0.0/24
 10.7.0.0/24 1:65535/udp    ALLOW       10.7.0.0/24
+[SERVER IP] 22/tcp         ALLOW       [SERVER/CA SUBNET]
+[SERVER IP] 1194,1195/udp  ALLOW       Anywhere
+[SERVER IP] 80,443/tcp     ALLOW       Anywhere
+
+[CA IP]     22            ALLOW OUT   [SERVER IP]
 ```
+- Note that when you need to do things on the server that involve the internet, you should do `sudo ufw disable`.
 
 ## HTTPS Certificates
 - Use `certbot` to keep https certificates up to date. Use the standalone server settings.
 - The command is pretty straight forwards. Ensure the domain is pointing to the public IP address you're using
 
 ## Running the Server
-- First ensure the client application is built by running `npm run build` in `./client` 
-- Run the server using `npm start` in `./server`
-- For Development, use `npm start headless` then run the angular app from `./client` using `npm start`
+- Within `/server` run `npm start -- example.org` (example.org being the domain the server is running from). Also, this script assumes you're sshing into the server machine. It
+determines the host IP based on $SSH_CLIENT. See `start.sh`.
+
+## Deploying the Server
+- Within `/server` run `npm run deploy -- example.org` (example.org being the domain the server is running from).
 
 ## Hard Drives
 - Mount the main hard drive at /share/base in fstab
@@ -69,9 +68,3 @@ To                         Action      From
 
 ## Database
 - Running reset-database.sh will delete and create the database. Use it to refresh data. However any unix/smb/vpn users won't be deleted this way.
-
-## Downloading Torrents
-- Find an OVPN file for the VPN being used. Add the following so we can control what traffic is being flowed through
-- `pull-filter ignore redirect-gateway`
-- Add a file called like auth.txt, put the username on the first line and password on the second. Update the client config to reference the file - `auth-user-pass ./auth.txt`
-- Rename it to [client-name].conf and place it in /etc/openvpn

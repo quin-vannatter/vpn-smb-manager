@@ -4,13 +4,15 @@
   "description": "Server for VPN SMB Manager",
   "main": "index.js",
   "scripts": {
-    "start": "sudo node index.js"
+    "deploy": "./deploy.sh",
+    "start": "./start.sh"
   },
-  "author": "",
+  "author": "Quin Vannatter",
   "license": "ISC",
   "dependencies": {
     "compression": "^1.7.4",
     "express": "^4.17.2",
+    "pm2": "^5.4.2",
     "simple-sqlite3-wrapper": "^1.0.1",
     "sqlite3": "^5.0.2"
   }

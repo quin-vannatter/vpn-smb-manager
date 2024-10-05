@@ -16,8 +16,8 @@ scp pi@ca:/usr/share/easy-rsa/pki/ca.crt pi@ca:/usr/share/easy-rsa/pki/private/v
 # Move the certs and keys to the VPN server
 sudo mv /tmp/ca-config/* /etc/openvpn/
 
-# Install the firewall (ufw) and OpenVPN
-sudo apt-get install npm openvpn bridge-utils ufw sqlite3 samba transmission-cli transmission-common transmission-daemon
+# Install required components
+sudo apt-get install npm openvpn bridge-utils ufw sqlite3 samba
 
 # Generate a ta.key
 openvpn --genkey secret ta.key
@@ -49,16 +49,8 @@ sudo cp ./smb-config/smb.conf /etc/samba/
 sudo cp ./dfree.sh /etc/samba/
 sudo chmod 777 /etc/samba/dfree.sh
 
-echo $PWD
-
 # Create bridge and eth interfaces to facilitate communication
 sudo cp ./create-interfaces /etc/init.d/
 sudo chmod +x /etc/init.d/create-interfaces
 sudo update-rc.d create-interfaces defaults
 sudo service create-interfaces start
-
-# Update the transmission
-sudo cp ./transmission/settings.json /etc/transmission-daemon/
-sudo mkdir -p ~/.config/transmission-daemon/
-sudo cp ./transmission/settings.json ~/.config/transmission-daemon/
-sudo service transmission-daemon start

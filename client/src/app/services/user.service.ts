@@ -35,14 +35,6 @@ export class UserService extends BaseService {
     return this.post(undefined, isGuest ? "guest" : "invite").pipe(map((res: any) => `${location.origin}/login/${res.inviteCode}/${isGuest ? "guest" : "new-user"}`))
   }
 
-  getUserScripts(): Observable<any[]> {
-    return this.get("scripts");
-  }
-
-  getDisplay(script: string, index: number): Observable<string[][]> {
-    return this.get(`scripts/display/${script}/${index}`);
-  }
-
   logout(): void {
     this.clearAuthToken();
   }

@@ -15,7 +15,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
 import { UserService } from './services/user.service';
 import { InviteCodeComponent } from './invite-code/invite-code.component';
 import { LoginComponent } from './login/login.component';
@@ -24,7 +23,6 @@ import { CertificateService } from './services/certificate.service';
 import { PasswordPromptComponent } from './password-prompt/password-prompt.component';
 import { LoadingComponent } from './loading/loading.component';
 import { ServerInfoComponent } from './server-info/server-info.component';
-import { UserScriptsComponent } from './user-scripts/user-scripts.component';
 
 @NgModule({
   declarations: [
@@ -34,8 +32,7 @@ import { UserScriptsComponent } from './user-scripts/user-scripts.component';
     MainComponent,
     PasswordPromptComponent,
     LoadingComponent,
-    ServerInfoComponent,
-    UserScriptsComponent
+    ServerInfoComponent
   ],
   imports: [
     BrowserModule,
@@ -54,7 +51,7 @@ import { UserScriptsComponent } from './user-scripts/user-scripts.component';
     MatIconModule,
     MatProgressSpinnerModule
   ],
-  providers: [ UserService, CertificateService ],
+  providers: [UserService, CertificateService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

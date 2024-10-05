@@ -32,7 +32,6 @@ export class MainComponent extends AppComponent {
       this.isLoggedIn = result;
       if (this.isLoggedIn) {
         this.getTableData();
-        userService.getUserScripts().pipe(first()).subscribe(userScripts => this.userScripts = userScripts);
       }
     });
     userService.getCurrentUser().pipe(first(user => user != undefined)).subscribe(user => this.currentUser = user);

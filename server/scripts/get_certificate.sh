@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat "$1"/config/base-"$3".conf
+cat "$1"/config/base-"$3".conf | sed "s/DOMAIN/$4/g"
 
 echo "<ca>"
 sudo cat /etc/openvpn/ca.crt
