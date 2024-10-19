@@ -50,6 +50,9 @@ const TOKEN_LIFESPAN = 3;
 const INVITE_TIMEOUT = 1000 * 60 * 5;
 const USERNAME_REXEX = /^[a-z_]{3,25}$/;
 const PASSWORD_REGEX = /^.{4,50}$/;
+const CERTIFICATE_CONNECTED_REGEX = id => new RegExp(`([2-9][0-9]{3}-[0-1][0-9]-[0-9]{1,2} [0-2][0-9]:[0-5][0-9]:[0-5][0-9]).+\\[${id}\\] Peer Connection Initiated with \\[AF_INET\\]([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{4,6})`, "g");
+const CERTIFICATE_DISCONNECTED_REGEX = id => new RegExp(`([2-9][0-9]{3}-[0-1][0-9]-[0-9]{1,2} [0-2][0-9]:[0-5][0-9]:[0-5][0-9]) ${id}.+client-instance exiting`, "g");
+const CERTIFICATE_HARDWARE_ADDRESS_REGEX = addr => new RegExp(`([2-9][0-9]{3}-[0-1][0-9]-[0-9]{1,2} [0-2][0-9]:[0-5][0-9]:[0-5][0-9]) ${addr.replaceAll(".", "\\.")} peer info: IV_HWADDR=([a-z0-9]{2}:[a-z0-9]{2}:[a-z0-9]{2}:[a-z0-9]{2}:[a-z0-9]{2}:[a-z0-9]{2})`, "g");
 const REMOVE_PROPERTIES = [
     "_id",
     "passwordHash",
@@ -69,6 +72,11 @@ const User = createWrapper("USERS", [
     "expirationDate",
     "token",
     "smbPassword"
+], db);
+
+const Device = createWrapper("DEVICES", [
+    "mac",
+    "name"
 ], db);
 
 let inviteCodes = [];
@@ -146,8 +154,9 @@ function createUser(username, password, isAdmin, smbPassword) {
                     isAdmin,
                     smbPassword
                 }).then(() => createSmbUser(username, smbPassword).then(() => resolve(true)));
+            } else {
+                resolve(false);
             }
-            resolve(false);
         })
     });
 }
@@ -213,16 +222,61 @@ function createGuestCode(username = undefined) {
     });
 }
 
+function getConnectionInfo(id, stdout) {
+    const connectionRegex = CERTIFICATE_CONNECTED_REGEX(id)
+    const disconnectedRegex = CERTIFICATE_DISCONNECTED_REGEX(id);
+    const connectionResults = [];
+    const hardwareResults = [];
+    let match;
+    while((match = connectionRegex.exec(stdout)) !== null) {
+        try {
+            connectionResults.push({
+                date: new Date(match[1]),
+                addr: match[2],
+                connected: true
+            })
+        } catch {
+            // Do nothing.
+        }
+    }
+    while((match = disconnectedRegex.exec(stdout)) !== null) {
+        try {
+            connectionResults.push({
+                date: new Date(match[1]),
+                connected: false
+            });
+        } catch {
+            // Do nothing.
+        }
+    }
+    const addr = connectionResults.filter(x => x.connected).sort((a,b) => b.date - a.date)?.[0]?.addr;
+    if (addr !== undefined) {
+        const regex = CERTIFICATE_HARDWARE_ADDRESS_REGEX(addr);
+        try {
+            while((match = regex.exec(stdout)) !== null) {
+                hardwareResults.push({
+                    date: new Date(match[1]),
+                    addr: match[2]
+                })
+            }
+        } catch {
+            // Do nothing.
+        }
+    }
+    return {
+        id,
+        connected: connectionResults.sort((a, b) => b.date - a.date).find(x => x)?.connected || false,
+        addr: hardwareResults.sort((a, b) => b.date - a.date).find(x => x)?.addr
+    }
+}
+
 function getConnectedCertificates(ids) {
     return new Promise(resolve => {
         exec(__dirname + "/scripts/list_connections.sh", (err, stdout) => {
             if (!err) {
                 let result = [];
                 ids.forEach(id => {
-                    let values = stdout.split("\n").filter(val => val.indexOf(id) !== -1);
-                    if (values.length > 0 && values[values.length - 1].indexOf("Peer Connection Initiated") !== -1) {
-                        result.push(id);
-                    }
+                    result.push(getConnectionInfo(id, stdout));
                 })
                 resolve(result);
             } else {
@@ -276,7 +330,7 @@ function isUserConnected(username) {
         Certificate.find({
             username
         }).then(certificates => {
-            getConnectedCertificates(certificates.map(certificate => certificate.id)).then(results => resolve(results.length > 0));
+            getConnectedCertificates(certificates.map(certificate => certificate.id)).then(results => resolve(results.some(x => x.connected)));
         });
     });
 }
@@ -287,7 +341,8 @@ function checkConnectedGuestCertificates() {
             username: undefined
         }).then(certificates => {
             getConnectedCertificates(certificates.map(certificate => certificate.id)).then(results => {
-                const expiredGuestCertificates = certificates.filter(certificate => !results.includes(certificate.id) && !guestIds.includes(certificate.id));
+                const connectedCertificates = results.filter(x => x.connected).map(x => x.id);
+                const expiredGuestCertificates = certificates.filter(certificate => !connectedCertificates.includes(certificate.id) && !guestIds.includes(certificate.id));
                 Promise.all(expiredGuestCertificates.map(certificate => deleteCertificateById(certificate.id))).then(() => resolve(certificates.length - expiredGuestCertificates.length));
             });
         });
@@ -459,16 +514,15 @@ function createEndpoint(action, path, fn, isAuthenticated = true, isAdmin = fals
 
 createEndpoint("get", "users", () => getUsers());
 
-createCertificateEndpoint("post", "certificates", (req, res) => {
+createEndpoint("post", "certificates", (req, res) => {
     return new Promise(resolve => {
         let password = req.body.password;
-        let type = req.body.type === "tap" ? "tap" : "tun";
         if (!validatePassword(req.user.passwordHash, password) || !password) {
             res.status(401);
             resolve();
         } else {
             createCertificate(req.user.username, password).then(id => {
-                getCertificateById(req.user.username, type, id).then(result => resolve(result));
+                Certificate.findOne({ id }).then(certificate => resolve(certificate));
             });
         }
     });
@@ -486,14 +540,38 @@ createCertificateEndpoint("get", "certificates/guest/download/:id/:type", req =>
     return getGuestCertificate(req.params.id, req.params.type === "tap" ? "tap" : "tun");
 }, false);
 
+createEndpoint("get", "devices", () => {
+    return new Promise(resolve => {
+        Device.find().then(devices => resolve(devices));
+    });
+});
+
+createEndpoint("post", "devices", req => {
+    return new Promise(resolve => {
+        let mac = req.body.mac;
+        let name = req.body.name;
+        Device.findOne({ mac }).then(device => {
+            const updatedDevice = {
+                mac,
+                name
+            };
+            if(device == null) {
+                Device.create(updatedDevice).then(() => resolve(true));
+            } else {
+                Device.update(updatedDevice, { mac }).then(() => resolve(true));
+            }
+        })
+    })
+})
+
 createEndpoint("get", "certificates", () => {
     return new Promise(resolve => {
         Certificate.find().then(certificates => {
             let certificateIds = certificates.map(certificate => certificate.id);
-            getConnectedCertificates(certificateIds).then(connectedIds => {
+            getConnectedCertificates(certificateIds).then(certificateInfo => {
                 resolve(cleanOutput(certificates).map(certificate => ({
-                    isConnected: connectedIds.indexOf(certificate.id) !== -1,
-                    ...certificate
+                    ...certificate,
+                    ...certificateInfo.find(x => x.id === certificate.id)
                 })));
             });
         })
