@@ -13,6 +13,7 @@ export abstract class BaseService {
   static headers = new HttpHeaders();
 
   static tokenSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  
 
   constructor(private http: HttpClient, private router: Router, private dialog: MatDialog) {
     BaseService.headers.append("Content-Type", "application/json");

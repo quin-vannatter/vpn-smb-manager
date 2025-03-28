@@ -1,5 +1,6 @@
 export interface Certificate {
     id: string;
     username: string;
-    isConnected: boolean;
+    connected: boolean;
+    addr: string;
 }

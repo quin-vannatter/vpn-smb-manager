@@ -1,10 +1,10 @@
 <div class="container" *ngIf="isLoggedIn">
   <div>
     <div class="user-content-row" *ngFor="let element of userTableData; trackBy:identify">
-      <div *ngIf="element.isConnected">
+      <div *ngIf="element.connected">
         <mat-icon [ngStyle]="{ 'color': '#46d61e' }">check_circle</mat-icon>
       </div>
-      <div *ngIf="!element.isConnected">
+      <div *ngIf="!element.connected">
         <mat-icon [ngStyle]="{ 'color': '#b51616' }">highlight_off</mat-icon>
       </div>
       <div class="user-content-username">
@@ -23,32 +23,15 @@
           *ngIf="!element.isAdmin && currentUser?.isAdmin">
           <mat-icon>grade</mat-icon> Promote User
         </button>
-        <button mat-menu-item (click)="clearCertificates(element)"
-          *ngIf="currentUser?.isAdmin && element.certificates.length">
-          <mat-icon>clear</mat-icon> Clear OVPN Profiles
-        </button>
       </mat-menu>
     </div>
   </div>
   <div class="action-content" *ngIf="(userTableData?.length || 0) > 0">
     <button mat-raised-button color="primary" (click)="logout()"><mat-icon>logout</mat-icon> Logout</button>
     <a mat-raised-button href="{{getOpenVpnLink()}}">Open VPN Client</a>
-    <button mat-raised-button mat-icon-button [matMenuTriggerFor]="connect">
+    <button *ngIf="currentUser !== undefined" mat-raised-button mat-icon-button (click)="openCertificatesDialog()">
       <mat-icon>router</mat-icon> OVPN Profiles
     </button>
-    <mat-menu #connect="matMenu">
-      <button mat-menu-item (click)="getCertificate()"
-        *ngIf="currentUser?.certificates?.length">
-        <mat-icon>download</mat-icon> Get Existing OVPN Profile
-      </button>
-      <button mat-menu-item (click)="createCertificate()">
-        <mat-icon>add</mat-icon> Create New OVPN Profile
-      </button>
-      <button mat-menu-item (click)="clearCertificates(currentUser)"
-        *ngIf="currentUser?.certificates?.length">
-        <mat-icon>clear</mat-icon> Clear OVPN Profiles
-      </button>
-    </mat-menu>
     <button mat-raised-button (click)="mapNetworkDrive()"><mat-icon>storage</mat-icon> Map Drive</button>
     <button *ngIf="currentUser?.isAdmin" mat-raised-button (click)="generateInviteLink(false)"><mat-icon>account_circle</mat-icon> Invite User</button>
     <button mat-raised-button (click)="generateInviteLink(true)" color="accent"><mat-icon>email</mat-icon> Create VPN Invite ( {{guestCount}} )</button>

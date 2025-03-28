@@ -5,12 +5,12 @@ import { AppComponent } from '../app.component';
 import { InviteCodeComponent } from '../invite-code/invite-code.component';
 import { LoadingComponent } from '../loading/loading.component';
 import { User } from '../models/user.interface';
-import { PasswordPromptComponent } from '../password-prompt/password-prompt.component';
 import { ServerInfoComponent } from '../server-info/server-info.component';
 import { CertificateService } from '../services/certificate.service';
 import { UserService } from '../services/user.service';
+import { CertificatesComponent } from '../certificates/certificates.component';
 
-const PING_INT = 5000;
+export const PING_INT = 5000;
 
 @Component({
   selector: 'app-main',
@@ -48,21 +48,11 @@ export class MainComponent extends AppComponent {
     this.userService.getUsers().pipe(first()).subscribe(result => {
       var users = result.resolvedUsers;
       this.guestCount = result.guestCount;
-      this.certificateService.getCertificates().pipe(first()).subscribe(certificates => {
-        if (certificates) {
-          users.forEach(user => {
-            user.certificates = certificates.filter(certificate => certificate.username === user.username);
-            if (user.username === this.currentUser?.username) {
-              this.currentUser.certificates = user.certificates;
-            }
-          });
-        }
-        this.userTableData = users;
-        if (this.timeout != undefined) {
-          clearTimeout(this.timeout);
-        }
-        this.timeout = setTimeout(() => this.getTableData(), PING_INT);
-      });
+      this.userTableData = users;
+      if (this.timeout != undefined) {
+        clearTimeout(this.timeout);
+      }
+      this.timeout = setTimeout(() => this.getTableData(), PING_INT);
     });
   }
 
@@ -74,6 +64,10 @@ export class MainComponent extends AppComponent {
     this.dialog.open(InviteCodeComponent, {
       data: { isGuest }
     });
+  }
+
+  openCertificatesDialog() {
+    this.dialog.open(CertificatesComponent);
   }
 
   getServerLink() {
@@ -90,32 +84,6 @@ export class MainComponent extends AppComponent {
       const dialogRef = this.dialog.open(LoadingComponent);
       this.userService.getSmb().pipe(first()).subscribe(() => dialogRef.close());
     }
-  }
-
-  clearCertificates(user: User | undefined) {
-    if (user) {
-      var dialogRef = this.dialog.open(LoadingComponent);
-      zip(user.certificates.map(certificate => this.certificateService.deleteCertificate(certificate.id))).pipe(first()).subscribe(() => {
-        this.getTableData();
-        dialogRef.close();
-      });
-    }
-  }
-
-  createCertificate() {
-    this.dialog.open(PasswordPromptComponent).afterClosed().pipe(first()).subscribe(password => {
-      if (password && this.currentUser?.username) {
-        var dialogRef = this.dialog.open(LoadingComponent);
-        this.certificateService.createCertificate(password).pipe(first()).subscribe(() => {
-          this.getTableData();
-          dialogRef.close();
-        });
-      }
-    });
-  }
-
-  getCertificate() {
-    this.certificateService.getCertificate();
   }
 
   deleteUser(user: User) {

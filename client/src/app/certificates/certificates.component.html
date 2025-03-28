@@ -1,0 +1,40 @@
+<div class="container">
+  <div>
+    <div class="certificate-content-row" *ngFor="let certificate of certificates; trackBy:identify">
+      <div *ngIf="(certificate.connected)">
+        <mat-icon [ngStyle]="{ 'color': '#46d61e' }">check_circle</mat-icon>
+      </div>
+      <div *ngIf="!(certificate.connected)">
+        <mat-icon [ngStyle]="{ 'color': '#b51616' }">highlight_off</mat-icon>
+      </div>
+      <div class="certificate-content-id">
+        <span>{{certificate.id}}</span>
+      </div>
+      <div>
+        <form>
+          <mat-form-field>
+            <mat-label>{{certificate.addr}}</mat-label>
+            <input matInput [disabled]="!certificate.addr?.length" [value]="getDeviceName(certificate.addr)" (keyup)="triggerDeviceUpdate(certificate.addr, $event)">
+          </mat-form-field>
+        </form>
+      </div>
+      <div class="certificate-content-actions">
+        <button mat-icon-button (click)="deleteCertificate(certificate)">
+          <mat-icon>delete</mat-icon>
+        </button>
+        <button mat-icon-button [matMenuTriggerFor]="menu">
+          <mat-icon>download</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="downloadCertificate(certificate)">AUTO</button>
+          <button mat-menu-item (click)="downloadCertificate(certificate, 'tap')">TAP</button>
+          <button mat-menu-item (click)="downloadCertificate(certificate, 'tun')">TUN</button>
+        </mat-menu>
+      </div>
+    </div>
+  </div>
+  <div class="action-content">
+    <button mat-raised-button (click)="createCertificate()"><mat-icon>create</mat-icon> Create</button>
+    <button color="primary" mat-raised-button (click)="deleteCertificates()"><mat-icon>clear</mat-icon> Delete All</button>
+  </div>
+</div>

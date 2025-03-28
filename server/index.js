@@ -166,8 +166,8 @@ function getUsers() {
         User.find().then(users => {
             Promise.all(users.map(user => {
                 return new Promise((resolveUser) => {
-                    isUserConnected(user.username).then(isConnected => resolveUser({
-                        isConnected,
+                    isUserConnected(user.username).then(connected => resolveUser({
+                        connected,
                         ...user
                     }));
                 });
@@ -375,14 +375,13 @@ function deleteCertificates(username) {
     return new Promise(resolve => {
         Certificate.find({
             username
-        }).then(certificates => {
-            Promise.all(certificates.map(certificate => {
+        }).then(async certificates => {
+            for(let certificate in certificates) {
                 if (certificate.id) {
-                    return deleteCertificateById(certificate.id);
-                } else {
-                    return Promise.resolve();
+                    await deleteCertificateById(certificate.id); 
                 }
-            })).then(() => resolve());
+            }
+            resolve();
         });
     });
 }
@@ -395,20 +394,6 @@ function deleteCertificateById(id) {
             }).then(() => resolve());
         });
     })
-}
-
-function getCertificate(username, type) {
-    return new Promise(resolve => {
-        getUnusedCertificates(username).then(certificates => {
-            let id;
-            if (certificates.length) {
-                id = certificates[0].id;
-            } else {
-                id = createId();
-            }
-            executeGetCertificate(id, type, resolve);
-        })
-    });
 }
 
 function getGuestCertificate(id, type) {
@@ -447,19 +432,6 @@ function getCertificateById(username, type, id) {
             }
         });
     });
-}
-
-function getUnusedCertificates(username) {
-    return new Promise(resolve => {
-        Certificate.find({
-            username
-        }).then(certificates => {
-            getConnectedCertificates(certificates.map(certificate => certificate.id)).then(connectedCertificates => {
-                let ids = connectedCertificates.map(connectedCertificate => connectedCertificate.id);
-                resolve(certificates.filter(certificate => ids.indexOf(certificate.id) === -1));
-            });
-        })
-    })
 }
 
 function cleanOutput(value) {
@@ -558,15 +530,21 @@ createEndpoint("post", "devices", req => {
             if(device == null) {
                 Device.create(updatedDevice).then(() => resolve(true));
             } else {
-                Device.update(updatedDevice, { mac }).then(() => resolve(true));
+                if (name) {
+                    Device.update(updatedDevice, { mac }).then(() => resolve(true));
+                } else {
+                    Device.delete({ mac });
+                }
             }
         })
     })
 })
 
-createEndpoint("get", "certificates", () => {
+createEndpoint("get", "certificates", req => {
     return new Promise(resolve => {
-        Certificate.find().then(certificates => {
+        Certificate.find({
+            username: req.user.username
+        }).then(certificates => {
             let certificateIds = certificates.map(certificate => certificate.id);
             getConnectedCertificates(certificateIds).then(certificateInfo => {
                 resolve(cleanOutput(certificates).map(certificate => ({
@@ -595,6 +573,19 @@ createEndpoint("delete", "certificates/:id", req => {
         })
     })
 });
+
+createEndpoint("delete", "certificates", req => {
+    return new Promise(resolve => {
+        let username = req.user.username;
+        User.findOne({
+            username
+        }).then(user => {
+            if (user && req.user.username) {
+                deleteCertificates(username).then(() => resolve());
+            }
+        });
+    });
+}, true);
 
 createEndpoint("get", "users/current", req => {
     return Promise.resolve(cleanOutput(req.user));

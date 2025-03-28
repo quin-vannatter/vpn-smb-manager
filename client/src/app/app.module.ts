@@ -23,6 +23,7 @@ import { CertificateService } from './services/certificate.service';
 import { PasswordPromptComponent } from './password-prompt/password-prompt.component';
 import { LoadingComponent } from './loading/loading.component';
 import { ServerInfoComponent } from './server-info/server-info.component';
+import { CertificatesComponent } from './certificates/certificates.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { ServerInfoComponent } from './server-info/server-info.component';
     InviteCodeComponent,
     LoginComponent,
     MainComponent,
+    CertificatesComponent,
     PasswordPromptComponent,
     LoadingComponent,
     ServerInfoComponent

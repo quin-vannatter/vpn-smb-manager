@@ -24,7 +24,7 @@ openvpn --genkey secret ta.key
 sudo mv ./ta.key /etc/openvpn/
 
 # Copy the server.conf to the VPN Server
-sudo cp ./vpn-config/*.conf /etc/openvpn/
+sudo cp ./vpn-conf/*.conf /etc/openvpn/
 
 # Start and enable the VPN
 sudo service openvpn restart
