@@ -1,0 +1,61 @@
+<div class="container" *ngIf="isLoggedIn">
+  <div>
+    <div class="content-row title" *ngIf="(torrentTableData?.length ?? 0) > 0">
+      <div class="content-stretch">
+        <span>Name</span>
+      </div>
+      <div class="content-stretch">
+        <span>Status</span>
+      </div>
+      <div class="content-stretch">
+        <span>Ratio</span>
+      </div>
+      <div class="content-stretch">
+        <span>ETA</span>
+      </div>
+      <div class="content-stretch">
+        <span>Have</span>
+      </div>
+      <div class="content-stretch">
+        <span>Done</span>
+      </div>
+      <button mat-icon-button style="visibility: hidden;"><mat-icon>delete</mat-icon></button>
+    </div>
+    <div class="content-row" *ngFor="let element of torrentTableData">
+      <div class="content-stretch">
+        <span>{{element.name}}</span>
+      </div>
+      <div class="content-stretch">
+        <span>{{element.status}}</span>
+      </div>
+      <div class="content-stretch">
+        <span>{{element.ratio}}</span>
+      </div>
+      <div class="content-stretch">
+        <span>{{element.eta}}</span>
+      </div>
+      <div class="content-stretch">
+        <span>{{element.have}}</span>
+      </div>
+      <div class="content-stretch">
+        <span>{{element.done}}</span>
+      </div>
+      <button mat-icon-button (click)="deleteTorrent(element)"><mat-icon>delete</mat-icon></button>
+    </div>
+  </div>
+  <div class="action-content-row">
+    <button mat-icon-button routerLink="/home"><mat-icon>home</mat-icon></button>
+    <mat-form-field appearance="outline" class="search-input">
+      <input matInput [formControl]="search" placeholder="Search" pattern="^\S{3}.+$" required>
+    </mat-form-field>
+    <button mat-icon-button (click)="searchTorrents()" [disabled]="!search.valid || isSearching"><mat-icon>search</mat-icon></button>
+  </div>
+  <div>
+    <div class="content-row" *ngFor="let element of searchTableData">
+      <button mat-icon-button (click)="addTorrent(element.magnet)"><mat-icon>add</mat-icon></button>
+      <div class="content-stretch">
+        <span [attr.title]="element.name">{{element.name}}</span>
+      </div>
+    </div>
+  </div>
+</div>

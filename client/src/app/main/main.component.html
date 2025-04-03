@@ -1,20 +1,29 @@
 <div class="container" *ngIf="isLoggedIn">
+  <div class="action-content-row">
+    <button mat-button (click)="logout()"><mat-icon>logout</mat-icon> Logout</button>
+    <button mat-button [matMenuTriggerFor]="inviteMenu"><mat-icon>email</mat-icon> Invite</button>
+    <mat-menu #inviteMenu>
+      <button mat-button *ngIf="currentUser?.isAdmin"  (click)="generateInviteLink(false)">Invite New User</button>
+      <button mat-button (click)="generateInviteLink(true)">Invite Guest User ( {{guestCount}} )</button>
+    </mat-menu>
+    <button mat-button routerLink="/torrents"><mat-icon>cloud</mat-icon> Torrents</button>
+  </div>
   <div>
-    <div class="user-content-row" *ngFor="let element of userTableData; trackBy:identify">
+    <div class="content-row" *ngFor="let element of userTableData; trackBy:identify">
       <div *ngIf="element.connected">
         <mat-icon [ngStyle]="{ 'color': '#46d61e' }">check_circle</mat-icon>
       </div>
       <div *ngIf="!element.connected">
         <mat-icon [ngStyle]="{ 'color': '#b51616' }">highlight_off</mat-icon>
       </div>
-      <div class="user-content-username">
+      <div class="content-stretch">
         <span>{{element.username}}</span>
         <mat-icon [ngStyle]="{ 'color': '#d6c41e' }" *ngIf="element.isAdmin">grade</mat-icon>
       </div>
-      <button *ngIf="currentUser?.isAdmin" class="user-content-actions" mat-icon-button [matMenuTriggerFor]="menu">
+      <button *ngIf="currentUser?.isAdmin" class="content-actions" mat-icon-button [matMenuTriggerFor]="menu">
         <mat-icon>menu</mat-icon>
       </button>
-      <mat-menu #menu="matMenu">
+      <mat-menu #menu>
         <button mat-menu-item (click)="deleteUser(element)"
           *ngIf="currentUser?.isAdmin">
           <mat-icon>delete</mat-icon> Delete User
@@ -26,14 +35,13 @@
       </mat-menu>
     </div>
   </div>
-  <div class="action-content" *ngIf="(userTableData?.length || 0) > 0">
-    <button mat-raised-button color="primary" (click)="logout()"><mat-icon>logout</mat-icon> Logout</button>
-    <a mat-raised-button href="{{getOpenVpnLink()}}">Open VPN Client</a>
-    <button *ngIf="currentUser !== undefined" mat-raised-button mat-icon-button (click)="openCertificatesDialog()">
-      <mat-icon>router</mat-icon> OVPN Profiles
-    </button>
-    <button mat-raised-button (click)="mapNetworkDrive()"><mat-icon>storage</mat-icon> Map Drive</button>
-    <button *ngIf="currentUser?.isAdmin" mat-raised-button (click)="generateInviteLink(false)"><mat-icon>account_circle</mat-icon> Invite User</button>
-    <button mat-raised-button (click)="generateInviteLink(true)" color="accent"><mat-icon>email</mat-icon> Create VPN Invite ( {{guestCount}} )</button>
+  <div *ngIf="(userTableData?.length || 0) > 0">
+    <div class="action-content-row">
+      <a mat-button href="{{getOpenVpnLink()}}"><mat-icon matBadge="1">app_shortcut</mat-icon> App</a>
+      <button mat-button *ngIf="currentUser !== undefined" (click)="openCertificatesDialog()">
+        <mat-icon matBadge="2">router</mat-icon> Profiles
+      </button>
+      <button mat-button (click)="mapNetworkDrive()"><mat-icon>storage</mat-icon> Map Drive</button>
+    </div>
   </div>
 </div>

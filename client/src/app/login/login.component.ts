@@ -27,9 +27,6 @@ export class LoginComponent extends AppComponent {
 
   constructor(private userService: UserService, route: ActivatedRoute, private router: Router, certificateService: CertificateService, private dialog: MatDialog) {
     super();
-    window.addEventListener("onkeyup", () => {
-
-    })
     route.params.subscribe(params => {
       this.inviteCode = params["inviteCode"];
       this.inviteType = params["inviteType"];

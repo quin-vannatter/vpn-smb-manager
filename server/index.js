@@ -7,6 +7,7 @@ let compression = require("compression");
 let {
     exec
 } = require("child_process");
+const { stdout } = require("process");
 let sqlite3 = require("sqlite3").verbose();
 let createWrapper = require("simple-sqlite3-wrapper").createWrapper;
 
@@ -59,6 +60,7 @@ const REMOVE_PROPERTIES = [
     "expirationDate",
     "token"
 ];
+const FAIL_WAIT_TIME = 240000;
 
 const Certificate = createWrapper("CERTIFICATES", [
     "id",
@@ -422,6 +424,50 @@ function executeGetSmbShare(username, smbPassword, callback) {
     exec([__dirname + "/scripts/get_smb_share.sh", __dirname, username, smbPassword].join(" "), (err, stdout) => handleOutput(err, stdout, callback));
 }
 
+function executeList(callback) {
+    exec(__dirname + "/scripts/list.sh", (err, stdout) => {
+        let response = {};
+        try {
+            response = JSON.parse(stdout)
+        } catch {}
+        handleOutput(err, response, callback)
+    });
+}
+
+function executeSearch(callback, search) {
+    try {
+        exec([__dirname + "/scripts/search.sh", `\"${search}\"`].join(" "), (err, stdout) => {
+            let response = [];
+            try {
+                response = JSON.parse(stdout)
+            } catch {}
+            handleOutput(err, response, callback)
+        });
+    } catch {
+        callback();
+    }
+}
+
+function executeAdd(callback, magnet) {
+    exec([__dirname + "/scripts/add.sh", `\"${magnet}\"`].join(" "), (err, stdout) => {
+        let response = {};
+        try {
+            response = JSON.parse(stdout)
+        } catch {}
+        handleOutput(err, response, callback)
+    });
+}
+
+function executeRemove(callback, id) {
+    exec([__dirname + "/scripts/remove.sh", `\"${id}\"`].join(" "), (err, stdout) => {
+        let response = {};
+        try {
+            response = JSON.parse(stdout)
+        } catch {}
+        handleOutput(err, response, callback)
+    });
+}
+
 function getCertificateById(username, type, id) {
     return new Promise(resolve => {
         Certificate.findOne({
@@ -473,7 +519,11 @@ function createEndpoint(action, path, fn, isAuthenticated = true, isAdmin = fals
             if (isJson) {
                 res.setHeader("Content-Type", "application/json");
                 fn(req, res).then(result => {
-                    res.end(JSON.stringify(result || {}));
+                    try {
+                        res.end(JSON.stringify(result));
+                    } catch {
+                        res.end();
+                    }
                 })
             } else {
                 fn(req, res).then(result => {
@@ -511,6 +561,14 @@ createCertificateEndpoint("get", "certificates/download/:id/:type", req => {
 createCertificateEndpoint("get", "certificates/guest/download/:id/:type", req => {
     return getGuestCertificate(req.params.id, req.params.type === "tap" ? "tap" : "tun");
 }, false);
+
+createEndpoint("get", "torrents", () => new Promise(resolve => executeList(resolve)));
+
+createEndpoint("get", "torrents/search/:search", req => new Promise(resolve => executeSearch(resolve, decodeURIComponent(req.params.search))));
+
+createEndpoint("post", "torrents", req => new Promise(resolve => executeAdd(resolve, req.body.magnet)));
+
+createEndpoint("delete", "torrents/:id", req => new Promise(resolve => executeRemove(resolve, req.params.id)));
 
 createEndpoint("get", "devices", () => {
     return new Promise(resolve => {

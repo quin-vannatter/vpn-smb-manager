@@ -5,7 +5,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatTable, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
@@ -24,6 +25,8 @@ import { PasswordPromptComponent } from './password-prompt/password-prompt.compo
 import { LoadingComponent } from './loading/loading.component';
 import { ServerInfoComponent } from './server-info/server-info.component';
 import { CertificatesComponent } from './certificates/certificates.component';
+import { TorrentService } from './services/torrent.service';
+import { TorrentsComponent } from './torrents/torrents.component';
 
 @NgModule({
   declarations: [
@@ -31,6 +34,7 @@ import { CertificatesComponent } from './certificates/certificates.component';
     InviteCodeComponent,
     LoginComponent,
     MainComponent,
+    TorrentsComponent,
     CertificatesComponent,
     PasswordPromptComponent,
     LoadingComponent,
@@ -51,9 +55,10 @@ import { CertificatesComponent } from './certificates/certificates.component';
     MatButtonModule,
     MatDialogModule,
     MatIconModule,
+    MatProgressBarModule,
     MatProgressSpinnerModule
   ],
-  providers: [UserService, CertificateService],
+  providers: [UserService, CertificateService, TorrentService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -5,7 +5,7 @@
     margin-bottom: 20px;
 }
 
-.user-content-row {
+.content-row {
     white-space: nowrap;
     display: flex;
     flex-direction: row;
@@ -17,29 +17,26 @@
     border-bottom: 1px solid #BBB;
 }
 
-.user-content-row * {
+.action-content-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: 0;
+    padding: 5px 20px;
+    white-space: nowrap;
+    background-color: #fff;
+    border-bottom: 1px solid #BBB;
+}
+.content-row * {
     display: flex;
     align-items: center;
 }
 
-.user-content-username {
+.content-stretch {
     flex: 1;
 }
 
-.user-content-actions {
+.content-actions {
     justify-content: center;
-}
-
-.action-content {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.action-content > button,a {
-    flex: 1;
-    flex-basis: 5%;
-    min-width: fit-content;
-    border-radius: 3px;
 }

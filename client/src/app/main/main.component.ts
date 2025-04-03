@@ -9,6 +9,7 @@ import { ServerInfoComponent } from '../server-info/server-info.component';
 import { CertificateService } from '../services/certificate.service';
 import { UserService } from '../services/user.service';
 import { CertificatesComponent } from '../certificates/certificates.component';
+import { TorrentService } from '../services/torrent.service';
 
 export const PING_INT = 5000;
 
@@ -24,9 +25,11 @@ export class MainComponent extends AppComponent {
 
   isLoggedIn: boolean = false;
   timeout?: NodeJS.Timeout;
-  userScripts: any[] = [];
 
-  constructor(private userService: UserService, private certificateService: CertificateService, private dialog: MatDialog) {
+  constructor(
+    private userService: UserService, 
+    private certificateService: CertificateService, 
+    private dialog: MatDialog) {
     super();
     userService.isLoggedIn().pipe(first()).subscribe(result => {
       this.isLoggedIn = result;
