@@ -4,19 +4,19 @@
       <div class="content-stretch">
         <span>Name</span>
       </div>
-      <div class="content-stretch">
+      <div class="content-stretch" *ngIf="!isMobile()">
         <span>Status</span>
       </div>
-      <div class="content-stretch">
+      <div class="content-stretch" *ngIf="!isMobile()">
         <span>Ratio</span>
       </div>
-      <div class="content-stretch">
+      <div class="content-stretch" *ngIf="!isMobile()">
         <span>ETA</span>
       </div>
-      <div class="content-stretch">
+      <div class="content-stretch" *ngIf="!isMobile()">
         <span>Have</span>
       </div>
-      <div class="content-stretch">
+      <div>
         <span>Done</span>
       </div>
       <button mat-icon-button style="visibility: hidden;"><mat-icon>delete</mat-icon></button>
@@ -25,19 +25,19 @@
       <div class="content-stretch">
         <span>{{element.name}}</span>
       </div>
-      <div class="content-stretch">
+      <div class="content-stretch" *ngIf="!isMobile()">
         <span>{{element.status}}</span>
       </div>
-      <div class="content-stretch">
+      <div class="content-stretch" *ngIf="!isMobile()">
         <span>{{element.ratio}}</span>
       </div>
-      <div class="content-stretch">
+      <div class="content-stretch" *ngIf="!isMobile()">
         <span>{{element.eta}}</span>
       </div>
-      <div class="content-stretch">
+      <div class="content-stretch" *ngIf="!isMobile()">
         <span>{{element.have}}</span>
       </div>
-      <div class="content-stretch">
+      <div>
         <span>{{element.done}}</span>
       </div>
       <button mat-icon-button (click)="deleteTorrent(element)"><mat-icon>delete</mat-icon></button>

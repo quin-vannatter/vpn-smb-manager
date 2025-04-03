@@ -35,6 +35,7 @@ export class TorrentsComponent extends AppComponent {
   constructor(
     private userService: UserService,
     private torrentService: TorrentService,
+    private certificateService: CertificateService,
     private dialog: MatDialog) {
     super();
     userService.isLoggedIn().pipe(first()).subscribe(result => {
@@ -44,6 +45,10 @@ export class TorrentsComponent extends AppComponent {
       }
     });
     userService.getCurrentUser().pipe(first(user => user != undefined)).subscribe(user => this.currentUser = user);
+  }
+
+  isMobile() {
+    return this.certificateService.isMobile();
   }
 
   getTorrentData(): void {
