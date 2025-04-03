@@ -1,6 +1,6 @@
 <div class="container" *ngIf="isLoggedIn">
-  <div>
-    <div class="content-row title" *ngIf="(torrentTableData?.length ?? 0) > 0">
+  <div *ngIf="(torrentTableData?.length ?? 0) > 0">
+    <div class="content-row title">
       <div class="content-stretch">
         <span>Name</span>
       </div>
