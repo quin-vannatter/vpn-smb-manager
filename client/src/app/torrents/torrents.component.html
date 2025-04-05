@@ -6,8 +6,8 @@
     </mat-form-field>
     <button mat-icon-button (click)="searchTorrents()" [disabled]="!search.valid || isSearching"><mat-icon>search</mat-icon></button>
   </div>
-  <div *ngIf="!isMobile()">
-    <div *ngIf="(torrentTableData?.length ?? 0) > 0">
+  <div *ngIf="!isMobile() && (torrentTableData?.length ?? 0) > 0">
+    <div>
       <div class="content-row title">
         <button mat-icon-button style="visibility: hidden;"><mat-icon>delete</mat-icon></button>
         <div style="flex:1;"><span>Name</span></div>
@@ -28,7 +28,7 @@
       </div>
     </div>
   </div>
-  <div class="content-card" *ngIf="isMobile()">
+  <div class="content-card" *ngIf="isMobile() && (torrentTableData?.length ?? 0) > 0">
     <mat-card class="content-card" *ngFor="let element of torrentTableData">
       <div class="content-column card-title">
         <span>{{element.name}}</span>
@@ -52,8 +52,8 @@
       </div>
     </mat-card>
   </div>
-  <div *ngIf="!isMobile()">
-    <div class="content-table" *ngIf="(searchTableData?.length ?? 0) > 0">
+  <div *ngIf="!isMobile() && (searchTableData?.length ?? 0) > 0">
+    <div class="content-table">
       <div class="content-row title">
         <button mat-icon-button style="visibility: hidden;"><mat-icon>add</mat-icon></button>
         <div style="flex:1;"><span>Name</span></div>
@@ -74,7 +74,7 @@
       </div>
     </div>
   </div>
-  <div class="content-card" *ngIf="isMobile()">
+  <div class="content-card" *ngIf="isMobile() && (searchTableData?.length ?? 0) > 0">
     <mat-card class="content-card" *ngFor="let element of searchTableData">
       <div class="content-header card-title">
          <span>{{element.name}}</span>
