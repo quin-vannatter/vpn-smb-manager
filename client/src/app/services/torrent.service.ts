@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BaseService } from './base.service';
 import { Observable } from 'rxjs';
-import { Torrent } from '../models/torrent.interface';
+import { Torrent, TorrentSearch } from '../models/torrent.interface';
 import { MatDialog } from '@angular/material/dialog';
 
 @Injectable({
@@ -23,8 +23,8 @@ export class TorrentService extends BaseService {
     return this.get<Torrent[] | undefined>();
   }
 
-  searchTorrents(search: string): Observable<Torrent[]> {
-    return this.get<Torrent[]>(`search/${encodeURIComponent(search)}`)
+  searchTorrents(search: string): Observable<TorrentSearch[]> {
+    return this.get<TorrentSearch[]>(`search/${encodeURIComponent(search)}`)
   }
   
   addTorrent(magnet: string): Observable<any> {

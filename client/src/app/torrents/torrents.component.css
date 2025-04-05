@@ -1,7 +1,7 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 40px;
     margin-bottom: 20px;
 }
 
@@ -60,6 +60,36 @@
     }
 }
 
+.search-title {
+    color: #fff;
+}
+
+.content-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.card-title {
+    display: flex;
+    justify-content: space-between;
+    span {
+        margin: auto 0;
+    }
+}
+
+.content-column {
+    display: flex;
+    flex-direction: row;
+    gap: 60px;
+    div {
+        display:flex;
+        flex-wrap: nowrap;
+        overflow: hidden;
+        flex-direction: column;
+    }
+}
+
 .content-row * {
     display: flex;
     align-items: center;
@@ -67,6 +97,7 @@
 
 .content-stretch {
     flex: 1;
+    min-width: fit-content;
 }
 
 .content-actions {

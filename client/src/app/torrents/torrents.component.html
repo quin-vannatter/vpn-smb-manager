@@ -1,48 +1,4 @@
 <div class="container" *ngIf="isLoggedIn">
-  <div *ngIf="(torrentTableData?.length ?? 0) > 0">
-    <div class="content-row title">
-      <div class="content-stretch">
-        <span>Name</span>
-      </div>
-      <div class="content-stretch" *ngIf="!isMobile()">
-        <span>Status</span>
-      </div>
-      <div class="content-stretch" *ngIf="!isMobile()">
-        <span>Ratio</span>
-      </div>
-      <div class="content-stretch" *ngIf="!isMobile()">
-        <span>ETA</span>
-      </div>
-      <div class="content-stretch" *ngIf="!isMobile()">
-        <span>Have</span>
-      </div>
-      <div>
-        <span>Done</span>
-      </div>
-      <button mat-icon-button style="visibility: hidden;"><mat-icon>delete</mat-icon></button>
-    </div>
-    <div class="content-row" *ngFor="let element of torrentTableData">
-      <div class="content-stretch">
-        <span>{{element.name}}</span>
-      </div>
-      <div class="content-stretch" *ngIf="!isMobile()">
-        <span>{{element.status}}</span>
-      </div>
-      <div class="content-stretch" *ngIf="!isMobile()">
-        <span>{{element.ratio}}</span>
-      </div>
-      <div class="content-stretch" *ngIf="!isMobile()">
-        <span>{{element.eta}}</span>
-      </div>
-      <div class="content-stretch" *ngIf="!isMobile()">
-        <span>{{element.have}}</span>
-      </div>
-      <div>
-        <span>{{element.done}}</span>
-      </div>
-      <button mat-icon-button (click)="deleteTorrent(element)"><mat-icon>delete</mat-icon></button>
-    </div>
-  </div>
   <div class="action-content-row">
     <button mat-icon-button routerLink="/home"><mat-icon>home</mat-icon></button>
     <mat-form-field appearance="outline" class="search-input">
@@ -50,12 +6,96 @@
     </mat-form-field>
     <button mat-icon-button (click)="searchTorrents()" [disabled]="!search.valid || isSearching"><mat-icon>search</mat-icon></button>
   </div>
-  <div>
-    <div class="content-row" *ngFor="let element of searchTableData">
-      <button mat-icon-button (click)="addTorrent(element.magnet)"><mat-icon>add</mat-icon></button>
-      <div class="content-stretch">
-        <span [attr.title]="element.name">{{element.name}}</span>
+  <div *ngIf="!isMobile()">
+    <div *ngIf="(torrentTableData?.length ?? 0) > 0">
+      <div class="content-row title">
+        <button mat-icon-button style="visibility: hidden;"><mat-icon>delete</mat-icon></button>
+        <div style="flex:1;"><span>Name</span></div>
+        <div style="min-width:120px;"><span>Status</span></div>
+        <div style="min-width:120px;"><span>Ratio</span></div>
+        <div style="min-width:120px;"><span>ETA</span></div>
+        <div style="min-width:120px;"><span>Have</span></div>
+        <div style="min-width:120px;"><span>Done</span></div>
+      </div>
+      <div class="content-row" *ngFor="let element of torrentTableData">
+        <button mat-icon-button (click)="deleteTorrent(element)"><mat-icon>delete</mat-icon></button>
+        <div style="flex:1;"><span>{{element.name}}</span></div>
+        <div style="min-width:120px;"><span>{{element.status}}</span></div>
+        <div style="min-width:120px;"><span>{{element.ratio}}</span></div>
+        <div style="min-width:120px;"><span>{{element.eta}}</span></div>
+        <div style="min-width:120px;"><span>{{element.have}}</span></div>
+        <div style="min-width:120px;"><span>{{element.done}}</span></div>
       </div>
     </div>
+  </div>
+  <div class="content-card" *ngIf="isMobile()">
+    <mat-card class="content-card" *ngFor="let element of torrentTableData">
+      <div class="content-column card-title">
+        <span>{{element.name}}</span>
+        <button mat-icon-button (click)="deleteTorrent(element)"><mat-icon>delete</mat-icon></button>
+      </div>
+      <div class="content-column">
+        <div class="title">
+          <span>Status</span>
+          <span>Ratio</span>
+          <span>ETA</span>
+          <span>Have</span>
+          <span>Done</span>
+        </div>
+        <div>
+          <span>{{element.status}}</span>
+          <span>{{element.ratio}}</span>
+          <span>{{element.eta}}</span>
+          <span>{{element.have}}</span>
+          <span>{{element.done}}</span>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+  <div *ngIf="!isMobile()">
+    <div class="content-table" *ngIf="(searchTableData?.length ?? 0) > 0">
+      <div class="content-row title">
+        <button mat-icon-button style="visibility: hidden;"><mat-icon>add</mat-icon></button>
+        <div style="flex:1;"><span>Name</span></div>
+        <div style="min-width:70px;"><span>Seeders</span></div>
+        <div style="min-width:70px;"><span>Leechers</span></div>
+        <div style="min-width:120px;"><span>Size</span></div>
+        <div style="min-width:120px;"><span>Date</span></div>
+        <div style="min-width:70px;"><span>Files</span></div>
+      </div>
+      <div class="content-row" *ngFor="let element of searchTableData">
+        <button mat-icon-button (click)="addTorrent(element.magnet)"><mat-icon>add</mat-icon></button>
+        <div style="flex:1;"><span [attr.title]="element.name">{{element.name}}</span></div>
+        <div style="min-width:70px;"><span [attr.title]="element.seeders">{{element.seeders}}</span></div>
+        <div style="min-width:70px;"><span [attr.title]="element.leechers">{{element.leechers}}</span></div>
+        <div style="min-width:120px;"><span [attr.title]="element.size">{{element.size}}</span></div>
+        <div style="min-width:120px;"><span [attr.title]="element.date">{{element.date}}</span></div>
+        <div style="min-width:70px;"><span [attr.title]="element.files">{{element.files}}</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="content-card" *ngIf="isMobile()">
+    <mat-card class="content-card" *ngFor="let element of searchTableData">
+      <div class="content-header card-title">
+         <span>{{element.name}}</span>
+         <button mat-icon-button (click)="addTorrent(element.magnet)"><mat-icon>add</mat-icon></button>
+      </div>
+      <div class="content-column">
+        <div class="title">
+          <span>Seeders</span>
+          <span>Leechers</span>
+          <span>Size</span>
+          <span>Date</span>
+          <span>Files</span>
+        </div>
+        <div>
+          <span>{{element.seeders}}</span>
+          <span>{{element.leechers}}</span>
+          <span>{{element.size}}</span>
+          <span>{{element.date}}</span>
+          <span>{{element.files}}</span>
+        </div>
+      </div>
+    </mat-card>
   </div>
 </div>

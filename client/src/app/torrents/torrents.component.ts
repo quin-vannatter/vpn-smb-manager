@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { finalize, first, zip } from 'rxjs';
 import { AppComponent } from '../app.component';
@@ -11,7 +11,7 @@ import { UserService } from '../services/user.service';
 import { CertificatesComponent } from '../certificates/certificates.component';
 import { TorrentService } from '../services/torrent.service';
 import { FormControl } from '@angular/forms';
-import { Torrent } from '../models/torrent.interface';
+import { Torrent, TorrentSearch } from '../models/torrent.interface';
 
 export const PING_INT = 5000;
 
@@ -27,7 +27,7 @@ export class TorrentsComponent extends AppComponent {
 
   currentUser?: User;
   torrentTableData: Torrent[] = [];
-  searchTableData: Torrent[] = [];
+  searchTableData: TorrentSearch[] = [];
 
   isLoggedIn: boolean = false;
   timeout?: NodeJS.Timeout;
@@ -36,7 +36,8 @@ export class TorrentsComponent extends AppComponent {
     private userService: UserService,
     private torrentService: TorrentService,
     private certificateService: CertificateService,
-    private dialog: MatDialog) {
+    private dialog: MatDialog,
+    private elementRef: ElementRef) {
     super();
     userService.isLoggedIn().pipe(first()).subscribe(result => {
       this.isLoggedIn = result;
@@ -49,6 +50,14 @@ export class TorrentsComponent extends AppComponent {
 
   isMobile() {
     return this.certificateService.isMobile();
+  }
+
+  getTitle(name: string) {
+    return name[0].toUpperCase() + name.substring(1).toLowerCase();
+  }
+
+  getSearchTableKeys() {
+    return Object.keys(this.searchTableData?.[0] || {})
   }
 
   getTorrentData(): void {

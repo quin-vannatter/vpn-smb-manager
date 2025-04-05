@@ -8,5 +8,14 @@ export interface Torrent {
     ratio: string;
     status: string;
     name: string;
+}
+
+export interface TorrentSearch {
+    name: string;
     magnet: string;
+    seeders: string;
+    leechers: string;
+    size: string;
+    date: string;
+    files: string;
 }
