@@ -99,4 +99,10 @@
       </div>
     </mat-card>
   </div>
+  <div class="no-results" *ngIf="noResults">
+    <mat-card class="content-card">
+      <img style="width:200px;height:200px" src="assets/man_gun.gif"/>
+      <p class="no-results">There are no results...</p>
+    </mat-card>
+  </div>
 </div>

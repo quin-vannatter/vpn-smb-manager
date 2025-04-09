@@ -25,6 +25,7 @@ export class TorrentsComponent extends AppComponent {
   currentUser?: User;
   torrentTableData: Torrent[] = [];
   searchTableData: TorrentSearch[] = [];
+  noResults: boolean = false;
 
   isLoggedIn: boolean = false;
   timeout?: NodeJS.Timeout;
@@ -74,10 +75,12 @@ export class TorrentsComponent extends AppComponent {
 
   clearResults(): void {
     this.searchTableData = [];
+    this.noResults = false;
   }
 
   searchTorrents(): void {
     if (this.search.valid && !this.isSearching) {
+      this.noResults = false;
       this.isSearching = true;
       const dialogRef = this.dialog.open(LoadingComponent);
       this.torrentService.searchTorrents(this.search.value.trim()).pipe(finalize(() => {
@@ -86,6 +89,9 @@ export class TorrentsComponent extends AppComponent {
       })).subscribe(result => {
         if (result != undefined) {
           this.searchTableData = result.filter(x => x.seeders !== "0");
+        }
+        if (this.searchTableData.length == 0) {
+          this.noResults = true;
         }
       });
     }
