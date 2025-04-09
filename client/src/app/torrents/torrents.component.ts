@@ -1,14 +1,11 @@
-import { Component, ElementRef, OnChanges } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { finalize, first, zip } from 'rxjs';
+import { finalize, first } from 'rxjs';
 import { AppComponent } from '../app.component';
-import { InviteCodeComponent } from '../invite-code/invite-code.component';
 import { LoadingComponent } from '../loading/loading.component';
 import { User } from '../models/user.interface';
-import { ServerInfoComponent } from '../server-info/server-info.component';
 import { CertificateService } from '../services/certificate.service';
 import { UserService } from '../services/user.service';
-import { CertificatesComponent } from '../certificates/certificates.component';
 import { TorrentService } from '../services/torrent.service';
 import { FormControl } from '@angular/forms';
 import { Torrent, TorrentSearch } from '../models/torrent.interface';
@@ -36,8 +33,7 @@ export class TorrentsComponent extends AppComponent {
     private userService: UserService,
     private torrentService: TorrentService,
     private certificateService: CertificateService,
-    private dialog: MatDialog,
-    private elementRef: ElementRef) {
+    private dialog: MatDialog) {
     super();
     userService.isLoggedIn().pipe(first()).subscribe(result => {
       this.isLoggedIn = result;
@@ -72,6 +68,10 @@ export class TorrentsComponent extends AppComponent {
     });
   }
 
+  clearResults(): void {
+    this.searchTableData = [];
+  }
+
   searchTorrents(): void {
     if (this.search.valid && !this.isSearching) {
       this.isSearching = true;
@@ -81,7 +81,7 @@ export class TorrentsComponent extends AppComponent {
         dialogRef.close();
       })).subscribe(result => {
         if (result != undefined) {
-          this.searchTableData = result;
+          this.searchTableData = result.filter(x => x.seeders !== "0");
         }
       });
     }
@@ -91,10 +91,13 @@ export class TorrentsComponent extends AppComponent {
     return /^[0-9]{1,3}/.exec(torrent.done)?.[0] ?? 0;
   }
 
-  addTorrent(magnet: string): void {
+  addTorrent(torrent: TorrentSearch): void {
     const dialogRef = this.dialog.open(LoadingComponent);
-    this.torrentService.addTorrent(magnet).pipe(finalize(() => dialogRef.close()))
-      .subscribe(() => this.getTorrentData());
+    this.torrentService.addTorrent(torrent.magnet).pipe(finalize(() => dialogRef.close()))
+      .subscribe(() => {
+        this.searchTableData.splice(this.searchTableData.findIndex(x => x === torrent), 1);
+        this.getTorrentData();
+      });
   }
 
   deleteTorrent(torrent: Torrent) {

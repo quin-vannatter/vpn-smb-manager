@@ -1,6 +1,7 @@
 <div class="container" *ngIf="isLoggedIn">
   <div class="action-content-row">
     <button mat-icon-button routerLink="/home"><mat-icon>home</mat-icon></button>
+    <button mat-icon-button (click)="clearResults()"><mat-icon>clear</mat-icon></button>
     <mat-form-field appearance="outline" class="search-input">
       <input matInput [formControl]="search" placeholder="Search" pattern="^\S{3}.+$" required>
     </mat-form-field>
@@ -29,12 +30,12 @@
     </div>
   </div>
   <div class="content-card" *ngIf="isMobile() && (torrentTableData?.length ?? 0) > 0">
-    <mat-card class="content-card" *ngFor="let element of torrentTableData">
+    <mat-card class="content-card torrent-content" *ngFor="let element of torrentTableData">
       <div class="content-column card-title">
         <span>{{element.name}}</span>
         <button mat-icon-button (click)="deleteTorrent(element)"><mat-icon>delete</mat-icon></button>
       </div>
-      <div class="content-column">
+      <div class="content-column" *ngIf="element.done != '100%'">
         <div class="title">
           <span>Status</span>
           <span>Ratio</span>
@@ -64,7 +65,7 @@
         <div style="min-width:70px;"><span>Files</span></div>
       </div>
       <div class="content-row" *ngFor="let element of searchTableData">
-        <button mat-icon-button (click)="addTorrent(element.magnet)"><mat-icon>add</mat-icon></button>
+        <button mat-icon-button (click)="addTorrent(element)"><mat-icon>add</mat-icon></button>
         <div style="flex:1;"><span [attr.title]="element.name">{{element.name}}</span></div>
         <div style="min-width:70px;"><span [attr.title]="element.seeders">{{element.seeders}}</span></div>
         <div style="min-width:70px;"><span [attr.title]="element.leechers">{{element.leechers}}</span></div>
@@ -78,7 +79,7 @@
     <mat-card class="content-card" *ngFor="let element of searchTableData">
       <div class="content-header card-title">
          <span>{{element.name}}</span>
-         <button mat-icon-button (click)="addTorrent(element.magnet)"><mat-icon>add</mat-icon></button>
+         <button mat-icon-button (click)="addTorrent(element)"><mat-icon>add</mat-icon></button>
       </div>
       <div class="content-column">
         <div class="title">
