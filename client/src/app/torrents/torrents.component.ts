@@ -68,6 +68,10 @@ export class TorrentsComponent extends AppComponent {
     });
   }
 
+  getTorrentsNoIdle() {
+    return this.torrentTableData.filter(x => x.status !== "Idle")
+  }
+
   clearResults(): void {
     this.searchTableData = [];
   }

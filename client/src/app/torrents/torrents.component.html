@@ -30,12 +30,12 @@
     </div>
   </div>
   <div class="content-card" *ngIf="isMobile() && (torrentTableData?.length ?? 0) > 0">
-    <mat-card class="content-card torrent-content" *ngFor="let element of torrentTableData">
+    <mat-card class="content-card torrent-content" *ngFor="let element of getTorrentsNoIdle()">
       <div class="content-column card-title">
         <span>{{element.name}}</span>
         <button mat-icon-button (click)="deleteTorrent(element)"><mat-icon>delete</mat-icon></button>
       </div>
-      <div class="content-column" *ngIf="element.done != '100%'">
+      <div class="content-column">
         <div class="title">
           <span>Status</span>
           <span>Ratio</span>
